@@ -1,0 +1,66 @@
+//矩阵-用于快速幂递推
+struct mat { int **v = NULL; int size; };
+void matnew(struct mat **a, int size) {
+	int i, j;
+	*a = new struct mat;
+	(*a)->v = new int*[size];
+	for (i = 0; i < size; i++) {
+		(*a)->v[i] = new int[size];
+		for (j = 0; j < size; j++)(*a)->v[i][j] = 0;
+	}
+	(*a)->size = size; return;
+}
+void matdel(struct mat **a) {
+	int i, size = (*a)->size;
+	for (i = 0; i < size; i++)
+		delete[](*a)->v[i];
+	delete[](*a)->v; (*a)->v = NULL;
+	delete[](*a);
+	return;
+}
+void matcopy(struct mat *a, struct mat *b) {
+	int i, j, size = a->size;
+	for (i = 0; i < size; i++) {
+		for (j = 0; j < size; j++)
+			a->v[i][j] = b->v[i][j];
+	}return;
+}
+void matprintf(struct mat *a) {
+	int i, j, size = a->size;
+	for (i = 0; i < size; i++) {
+		for (j = 0; j < size; j++)
+			printf(" %d", a->v[i][j]);
+		printf("\n");
+	}printf("\n"); return;
+}
+void matm(struct mat *a, struct mat *b, int m = 0) {
+	int i, j, k, temp, size = a->size;
+	struct mat *c = NULL; matnew(&c, size);
+	for (i = 0; i < size; i++) {
+		for (j = 0; j < size; j++) {
+			temp = 0;
+			for (k = 0; k < size; k++) {
+				if (m)temp += (a->v[i][k] * b->v[k][j]) % m;
+				else temp += a->v[i][k] * b->v[k][j];
+				if (m)temp %= m;
+			}
+			c->v[i][j] = temp;
+		}
+	}
+	matcopy(a, c); matdel(&c); return;
+}
+void matfastpow(struct mat *a, int time, int m = 0) {
+	int i, j, size = a->size;
+	struct mat *c = NULL; matnew(&c, a->size);
+	matcopy(c, a);
+	for (i = 0; i < size; i++)
+		for (j = 0; j < size; j++)
+			if (i == j)a->v[i][j] = 1;
+			else a->v[i][j] = 0;
+			while (time) {
+				if (time % 2)matm(a, c, m);
+				matm(c, c, m);
+				time /= 2;
+			}
+			matdel(&c); return;
+}
