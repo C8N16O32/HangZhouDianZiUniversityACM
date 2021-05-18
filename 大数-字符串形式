@@ -1,0 +1,58 @@
+//字符串加法 & 特殊catalan数 递推法
+#define straddmax 1000
+void stradd(char*a,char*b) {
+	//检查长度
+	int ae = straddmax - 1, be = straddmax - 1;
+	while (a[ae] == 0)ae--; while (b[be] == 0)be--;
+	int ce = ae; if (be > ae)ce = be;
+	//加法
+	int s = 0, i = ce;
+	for (i = 0; i <= ce; i++) {
+		if (i <= ae)s += a[ae - i] - 48;
+		if (i <= be)s += b[be - i] - 48;
+		a[ce - i] = 48 + s % 10;
+		s /= 10;
+	}
+	//进位
+	if (s) { for (i = ce; i >= 0; i--)a[i + 1] = a[i]; a[0] = 49; }
+	return;
+}
+void lintsscan(char*p, int plen, struct lint*a) {
+	//检查长度
+	int pe = plen - 1, i, sum, muti;
+	while (p[pe] == 0)pe--;
+	i = 0; sum = 0; muti = 1;
+	while (1) {
+		sum += muti*(p[pe - i] - 48); muti *= 10;
+
+		if (i % 8 == 7 || i == pe) {
+			linta(a, sum, i / 8);
+			if (i == pe)break;
+			sum = 0; muti = 1;
+		}
+		i++;
+	}
+	return;
+}
+void catafun(int m, int n,struct lint *a) {
+	//初始化
+	char **p = new char*[n + 1];
+	int i, j;
+	for (i = 0; i <= n; i++) {
+		p[i] = new char[straddmax];
+		for (j = 0; j < straddmax; j++)p[i][j] = '\0';
+		p[i][0] = 48;
+	}
+	p[0][0] = 49;
+	//递推
+	for (i = 1; i <= m; i++)
+		for (j = 1; j <= n; j++) {
+			if (j <= i)stradd(p[j], p[j - 1]);
+		}
+	//传值&打印
+	lintsscan(p[n], straddmax, a);
+	//回收内存
+	for (i = 0; i <= n; i++)delete[]p[i];
+	delete[]p;
+	return;
+}
