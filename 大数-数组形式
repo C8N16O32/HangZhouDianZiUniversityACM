@@ -1,0 +1,200 @@
+//C大数类
+struct lint { int len; int size; int* v = NULL; };//length、size、value
+#define lenstep 8
+#define lintbase 100000000
+//lint_basic
+void lintreset(struct lint *a) {
+	int i; for (i = 0; i < a->len; i++)
+		a->v[i] = 0;
+	a->len = 0; return;
+}
+void lintnew(struct lint**a, int size) {
+	if (*a == NULL)*a = new struct lint;
+	(*a)->len = size; (*a)->size = size;
+	(*a)->v = new int[size];
+	lintreset(*a); return;
+}
+void lintdelete(struct lint **a) {
+	delete[](*a)->v; (*a)->v = NULL; return;
+}
+void lintresize(struct lint *a, int sizenew) {
+	int*temp = NULL, lenold = 0, i;
+	if (a->len) {
+		temp = new int[a->len]; lenold = a->len;
+		for (i = 0; i < lenold; i++)
+			temp[i] = a->v[i];
+	}
+	lintdelete(&a); 
+	lintnew(&a, sizenew);
+	if (sizenew < lenold) { lenold = sizenew; a->len = sizenew; }
+	for (i = 0; i < lenold; i++)a->v[i] = temp[i];
+	a->len = lenold;
+	delete[]temp; return;
+}
+void lintcopy(struct lint *a, struct lint *b) {
+	if (b->len >a->size)lintresize(a, b->len);
+	lintreset(a);
+	int i; for (i = 0; i < b->len; i++) a->v[i] = b->v[i];
+	a->len = b->len; return;
+}
+int lintcmp(struct lint *a, struct lint *b) {
+	//不支持负数
+	if (a->len > b->len)return 1;
+	if (a->len < b->len)return -1;
+	int i = a->len;
+	while (i--) {
+		if (a->v[i] > b->v[i])return 1;
+		if (a->v[i] < b->v[i])return -1;
+	}
+	return 0;
+}
+//lint_print
+void lintprintf(struct lint *a) {
+	int isfirst = 1, i;
+	for (i = a->len - 1; i >= 0; i--)
+		if (isfirst) {
+			if (a->v[i])printf("%d", a->v[i]);
+			isfirst = 0;
+		}
+		else printf("%08d", a->v[i]);
+		if (isfirst)printf("0");
+		printf("\n");
+		return;
+}
+void lintsprintf(struct lint *a, char* temp0, int tempsize = -1) {
+	int isfirst = 1, i; char* temp = temp0;
+	if (tempsize != -1) {
+		i = tempsize - 1;
+		while (temp[i] == '\0'&&i >= 0)i--;
+		temp += i + 1;
+	}
+	for (i = a->len - 1; i >= 0; i--) {
+		if (isfirst) {
+			if (a->v[i])temp += sprintf(temp, "%d", a->v[i]);
+			isfirst = 0;
+		}
+		else temp += sprintf(temp, "%08d", a->v[i]);
+		if (tempsize != -1 && temp - temp0 > tempsize - 8)return;
+	}
+		if (isfirst)temp+=sprintf(temp, "0");
+		temp += sprintf(temp, "\n");
+		return;
+}
+//lint_add
+void linta(struct lint *a, struct lint *b) {
+	int temp, base = lintbase;
+	int n = b->len, i = 0;
+	if (a->size <= b->len)lintresize(a, b->len + lenstep - 1);
+	temp = 0;
+	while (1) {
+		if (i < n)temp += b->v[i];
+		if (i >= n&&temp == 0)break;
+		if (i >= a->size)lintresize(a, i + lenstep - 1);
+		temp += a->v[i];
+		a->v[i] = temp%base; temp /= base; i++;
+	}
+	if (a->len < b->len)a->len = b->len;
+	if (a->v[a->len] && a->len < a->size)a->len++;
+	while (a->size - a->len > lenstep)lintresize(a, a->size - lenstep);
+	return;
+}
+void linta(struct lint *a, int num, int section = 0) {
+	int temp, base = lintbase;
+	int i = section;
+	temp = num;
+	while (1) {
+		if (temp == 0)break;
+		if (i >= a->size)lintresize(a, i + lenstep - 1);
+		temp += a->v[i];
+		a->v[i] = temp%base; temp /= base; i++;
+	}
+	if (a->len < 1)a->len = 1;
+	if (a->v[a->len] && a->len < a->size)a->len++;
+	while (a->size - a->len > lenstep)lintresize(a, a->size - lenstep);
+	return;
+}
+//lint_sub
+void lints(struct lint *a, struct lint *b) {
+	//不支持负数
+	int temp = 0, base = lintbase;
+	int n = a->len, i;
+	for (i = 0; i < n; i++) {
+		temp += a->v[i];
+		if (i < b->len)temp -= b->v[i];
+		if (temp >= 0) { a->v[i] = temp; temp = 0; if (i >= b->len)break; }
+		else { a->v[i] = temp + base; temp = -1; }
+	}
+	i = a->len - 1; while (a->v[i] == 0 && i >= 0)i--; a->len = i + 1;
+	while (a->size - a->len > lenstep)lintresize(a, a->size - lenstep);
+	return;
+}
+//lint_muti
+void lintm(struct lint *a, struct lint *b) {
+	static struct lint*c = NULL; static int isfirst = 1;
+	if (isfirst) { lintnew(&c, lenstep); isfirst = 0; }
+	else { if (c->size < a->len + b->len)lintresize(c, a->len + b->len + lenstep); lintreset(c); }
+	int i, j; long long temp, temp2, base = lintbase;
+	temp = 0;
+	for (i = 0; i < c->size; i++) {
+		for (j = 0; j <= i; j++) {
+			temp2 = 1;
+			if (j < a->len)temp2 *= a->v[j]; else temp2 = 0;
+			if (i - j < b->len)temp2 *= b->v[i - j]; else temp2 = 0;
+			temp += temp2;
+		}
+		c->v[i] = temp%base; temp /= base;
+	}
+	i = c->size - 1; while (c->v[i] == 0)i--; c->len = i + 1;
+	lintcopy(a, c);
+	return;
+}
+void lintm(struct lint *a, int num) {
+	static struct lint *c = NULL; static int isfirst = 1;
+	if (isfirst) { lintnew(&c, 1); isfirst = 0; }
+	else { lintreset(c); }
+	linta(c, num);
+	lintm(a, c); return;
+}
+//lint_div
+int lintd(struct lint *a, struct lint *b) {
+	static struct lint *c = NULL, *d = NULL, *e = NULL; static int isfirst = 1;
+	if (isfirst) { lintnew(&c, a->size); lintnew(&d, a->size); lintnew(&e, a->size); isfirst = 0; }
+	else {
+		if (c->size < a->len) {
+			lintresize(c, a->len + lenstep);
+			lintresize(d, a->len + lenstep);
+			lintresize(e, a->len + lenstep);
+		}lintreset(c); lintreset(d); lintreset(e);
+	}
+	int i;
+	while (lintcmp(a, b) != -1) {
+		lintreset(d); linta(d, 1);
+		while (1) {
+			lintcopy(e, b); lintm(e, d); lintm(e, 10);
+			if (lintcmp(a, e) == -1)break;
+			lintm(d, 10);
+		}
+		i = 1;
+		while (1) {
+			lintcopy(e, b); lintm(e, d); lintm(e, i + 1);
+			if (lintcmp(a, e) == -1)break;
+			i++;
+		}
+		lintcopy(e, b); lintm(d, i); lintm(e, d); 
+		linta(c, d); 
+		lints(a, e); 
+	}
+	int re = 0;
+	lintreset(d);
+	if (lintcmp(a, d) == 0)re = 0; else re = 1;
+	i = c->len - 1; while (c->v[i] == 0 && i >= 0)i--; c->len = i + 1;
+	lintcopy(a, c);
+	return re;
+}
+void lintd(struct lint *a, int num) {
+	static struct lint *c = NULL; static int isfirst = 1;
+	if (isfirst) { lintnew(&c, 1); isfirst = 0; }
+	else { lintreset(c); }
+	linta(c, num);
+	lintd(a, c); return;
+}
