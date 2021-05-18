@@ -64,3 +64,4 @@ void matfastpow(struct mat *a, int time, int m = 0) {
 			}
 			matdel(&c); return;
 }
+
