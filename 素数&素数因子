@@ -1,0 +1,61 @@
+//素数&素数因子
+struct pri { int*prik = NULL, *priflag = NULL, *priv = NULL, prisize = 0; };
+void priset(struct pri**a,int prisize) {
+	if (*a == NULL)*a = new struct pri;
+	(*a)->priflag = new int[prisize];
+	int i = 0, j = 0, k = 1;
+	for (i = 0; i < prisize; i++)(*a)->priflag[i] = 0;
+	for (i = 2; i < 230; i++)
+		if (!(*a)->priflag[i]) {
+			for (j = i * 2; j < prisize; j += i)
+				(*a)->priflag[j] = k;
+			k++;
+		}
+	j = 0;
+	for (i = 2; i < prisize; i++)if ((*a)->priflag[i] == 0)j++;
+	(*a)->prik = new int[j];
+	i = 0; j = 2;
+	while (j < prisize) { if ((*a)->priflag[j] == 0) { (*a)->prik[i] = j; i++; }j++; }
+	prisize = i;
+
+	(*a)->priv = new int[prisize];
+	for (i = 0; i < prisize; i++)
+		(*a)->priv[i] = 0;
+	(*a)->prisize = prisize;
+	return;
+}
+void privreset(struct pri*a) {
+	int i; for (i = 0; i < a->prisize; i++)a->priv[i] = 0; return;
+}
+//素数因子计数-一个数字
+void prif1(struct pri *a,int num,int mode=1) {
+	while (a->priflag[num]) {
+		a->priv[a->priflag[num] - 1] += mode;
+		num /= a->prik[a->priflag[num] - 1];
+	}
+	int i = 0;
+	while (a->prik[i] != num)i++;
+	if (i < a->prisize)a->priv[i]++;
+	return;
+}
+//素数因子计数-排列数
+void prifcnm(struct pri *a,int n, int m) {
+	if (n - m < m)m = n - m; int i;
+	privreset(a);
+	//re=n!/(n-m)!
+	for (i = n - m + 1; i <= n; i++)
+		prif1(a, i, 1);
+	//re=re/m!
+	for (i = 1; i <= m; i++)
+		prif1(a, i, -1);
+}
+//素数因子导出
+void pri2lint(struct pri *a, struct lint *b) {
+	int i, j;
+	for (i = 0; i < a->prisize; i++)
+		if(a->priv[i])
+			for (j = 0; j < a->priv[i]; j++)
+				lintm(b, a->prik[i]);
+	return;
+}
+
