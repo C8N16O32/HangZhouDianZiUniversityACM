@@ -58,4 +58,3 @@ void pri2lint(struct pri *a, struct lint *b) {
 				lintm(b, a->prik[i]);
 	return;
 }
-
