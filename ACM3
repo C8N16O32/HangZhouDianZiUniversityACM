@@ -1,0 +1,1025 @@
+/*======================================================================   #65 - #72  动态规划2：背包，概率   ======================================================================*/
+
+//题目3-3-1 存钱罐内容（推测最小值
+
+//#define maxw 10000
+//#define maxn 500
+//#define maxp 99999999
+//void reset(int*a, int size) {
+//	int i;
+//	for (i = 0; i < size; i++)
+//		a[i] = 0; return;
+//}
+//int dpmain(int*p,int*w,int n,int f) {
+//	int i, j, dp[maxw] = { 0 };
+//	for (j = 0; j <= f; j++)dp[j] = maxp;
+//	dp[0] = 0;
+//	for (i = 0; i < n; i++)
+//		for (j = w[i]; j <= f; j++)
+//			if (dp[j - w[i]] != maxp)
+//				if (dp[j] > dp[j - w[i]] + p[i])
+//					dp[j] = dp[j - w[i]] + p[i];
+//	return dp[f];
+//}
+//int main() {
+//	int t, e, f, r;
+//	int i, n, w[maxn] = { 0 }, p[maxn] = { 0 };
+//	scanf("%d",&t);
+//	while (t--) {
+//		scanf("%d%d", &e, &f); f = f - e;
+//		scanf("%d", &n);
+//		for (i = 0; i < n; i++)
+//			scanf("%d%d", p + i, w + i);
+//		r = dpmain(p, w, n, f);
+//		if (r == maxp)printf("This is impossible.\n");
+//		else printf("The minimum amount of money in the piggy-bank is %d.\n", r);
+//		reset(w, n); reset(p, n);
+//	}
+//	return 0;
+//}
+
+//题目3-3-2 平分大理石（推测能否平分
+
+//#define maxn 6
+//#define maxp 120000
+//int dpmain(int*a, int sum) {
+//	if (sum % 2)return 0;
+//	bool dp[maxp] = { 0 };
+//	int i, j, pack, packf;
+//	dp[0] = 1;
+//	for (i = 0; i < maxn; i++) if (a[i]) {
+//		pack = 1, packf = 0;//二进制优化
+//		do {
+//			if (packf == 0)packf = 1;
+//			else if (a[i] - pack * 4 + 1>0)pack *= 2;
+//			else { pack = a[i] - pack * 2 + 1; packf = 0; }//pack=0 对下面的操作是安全的
+//
+//			for (j = sum / 2; j >= (i + 1)*pack; j--)
+//				if (dp[j - (i + 1)*pack])dp[j] = 1;
+//
+//		} while (packf);
+//	}
+//	if (dp[sum / 2])return 1;
+//	else return 0;
+//}
+//int main() {
+//	int i, t = 1, a[maxn] = { 0 }, sum = 0;
+//	while (1) {
+//		for (i = 0; i < maxn; i++)
+//			scanf("%d", a + i);
+//		sum = 0; for (i = 0; i < maxn; i++)sum += a[i] * (i + 1);
+//		if (sum == 0)break;
+//		if (dpmain(a, sum))
+//			printf("Collection #%d:\n"
+//				"Can be divided.\n\n", t);
+//		else printf("Collection #%d:\n"
+//			"Can't be divided.\n\n", t);
+//		t++;
+//	}
+//	return 0;
+//}
+
+//题目3-3-3 采购物品（推测最大值 
+
+//#define maxm 110
+//#define maxn 101
+//void reset(int*p, int*w, int*c,int size){
+//	int i; for (i = 0; i < size; i++){
+//		p[i] = 0; w[i] = 0; c[i] = 0;
+//	}return;
+//}
+//int dpmain(int*p, int*w, int*c, int n, int m) {
+//	int i, j, dp[maxn], pack, packf;
+//	for (i = 0; i < maxn; i++) dp[i] = -1;
+//	dp[0] = 0;
+//	for (i = 0; i < m; i++) {
+//		pack = 1; packf = 0;
+//		do {
+//			if (packf == 0)packf = 1;
+//			else if (c[i] - 4 * pack + 1>0)pack *= 2;
+//			else { pack = c[i] - pack * 2 + 1; packf = 0; }
+//			for (j = n; j >= p[i] * pack; j--)
+//				if (dp[j - p[i] * pack] != -1)
+//					if (dp[j] < dp[j - p[i] * pack] + w[i] * pack)
+//						dp[j] = dp[j - p[i] * pack] + w[i] * pack;
+//		} while (packf);
+//	}
+//	int max = dp[0];
+//	for (i = 0; i <= n; i++)
+//		if (max < dp[i])max = dp[i];
+//	return max;
+//}
+//int main() {
+//	int p[maxm] = { 0 }, w[maxm] = { 0 }, c[maxm] = { 0 }, C, n, m, i;
+//	scanf("%d", &C); while (C--) {
+//		scanf("%d%d", &n, &m);
+//		i = m;
+//		while (i--)scanf("%d%d%d", p + i, w + i, c + i);
+//		n = dpmain(p, w, c, n, m);
+//		if (n < 0)n = 0;
+//		printf("%d\n", n);
+//		reset(p, w, c, m);
+//	}
+//	return 0;
+//}
+
+//题目3-3-4 决策序列（推测最大值
+
+//#define maxm 101
+//void reset(int(*a)[maxm], int n, int m) {
+//	int i, j;
+//	for (i = 0; i < n; i++)
+//		for (j = 0; j < m; j++)
+//			a[i][j] = 0; 
+//	return;
+//}
+//void scanmain(int(*a)[maxm], int n, int m) {
+//	int i, j;
+//	for (i = 0; i < n; i++)
+//		for (j = 0; j < m; j++)
+//			scanf("%d", &a[i][j]);
+//	return;
+//}
+//int dpmain(int(*a)[maxm], int n, int m) {
+//	int dp[maxm] = { 0 }, i, j, k;
+//	for (i = 0; i < maxm; i++)dp[i] = -1; dp[0] = 0;
+//	for (i = 0; i < n; i++)
+//		for (j = m; j >= 1; j--)
+//			for (k = 1; k <= j; k++)
+//				if (dp[j - k] != -1)
+//					if (dp[j] < dp[j - k] + a[i][k - 1])
+//						dp[j] = dp[j - k] + a[i][k - 1];
+//	int max = dp[0];
+//	for (i = 0; i <= m; i++)
+//		if (max < dp[i])max = dp[i];
+//	return max;
+//}
+//int main() {
+//	int n, m, a[maxm][maxm];
+//	reset(a, maxm, maxm);
+//	while (1) {
+//		scanf("%d%d", &n, &m);
+//		if (m == 0)break;
+//		scanmain(a, n, m);
+//		printf("%d\n", dpmain(a, n, m));
+//		reset(a, n, m);
+//	}
+//	return 0;
+//}
+
+//题目3-3-5 连环大盗（概率限制下推测最大值
+
+//#define maxn 101
+//#define maxdp 10001
+//int dpmain(int*mj, double*pj, double p, int n) {
+//	p = 1 - p;
+//	int i, j;
+//	double dp[maxdp] = { 0 };
+//	for (i = 0; i < maxdp; i++)dp[i] = 0; dp[0] = 1;
+//	for (i = 0; i < n; i++)
+//		for (j = maxdp - 1; j >= mj[i]; j--)
+//			if (dp[j - mj[i]] > 0)
+//				if (dp[j] < dp[j - mj[i]] * (1 - pj[i]))
+//					dp[j] = dp[j - mj[i]] * (1 - pj[i]);
+//	int max = 0;
+//	for (i = 0; i < maxdp; i++)
+//		if (dp[i] - p > 0.000000001)max = i;
+//	return max;
+//}
+//int main() {
+//	int i, t, n, mj[maxn] = { 0 };
+//	double p, pj[maxn] = { 0 };
+//	scanf("%d", &t); while (t--) {
+//		scanf("%lf%d", &p, &n);
+//		for (i = 0; i < n; i++)
+//			scanf("%d%lf", mj + i, pj + i);
+//		printf("%d\n", dpmain(mj, pj, p, n));
+//		for (i = 0; i < n; i++) {
+//			mj[i] = 0; pj[i] = 0;
+//		}
+//	}
+//	return 0;
+//}
+
+//题目3-3-6 饭卡（条件限制下推测最大值
+
+//#define maxn 1001
+//#define maxdp 1060
+//void sortmain(int*a,int size) {
+//	int i, j, temp, tempv;
+//	for (i = 0; i < size - 1; i++) {
+//		temp = i;
+//		for (j = i + 1; j < size; j++)
+//			if (a[temp]>a[j])temp = j;
+//		tempv = a[temp]; a[temp] = a[i]; a[i] = tempv;
+//	}return;
+//}
+//int dpmain(int*a, int n, int m) {
+//	int i, j, dp[maxdp] = { 0 };
+//	for (i = 0; i < maxdp; i++)dp[i] = 2000000; dp[0] = m;
+//	for (i = 0; i < n; i++)
+//		for (j = maxdp - 1; j >= a[i]; j--)
+//			if (dp[j - a[i]] >= 5 && dp[j - a[i]]<2000)
+//				if (dp[j] > dp[j - a[i]] - a[i])
+//					dp[j] = dp[j - a[i]] - a[i];
+//	int min = dp[0];
+//	for (i = 0; i < maxdp - 1; i++)
+//		if (min>dp[i])min = dp[i];
+//	return min;
+//}
+//int main() {
+//	int n, a[maxn] = { 0 }, m, i;
+//	while (1) {
+//		scanf("%d", &n); if (n == 0)break;
+//		for (i = 0; i < n; i++)scanf("%d", a + i);
+//		sortmain(a, n);
+//		scanf("%d", &m);
+//		printf("%d\n", dpmain(a, n, m));
+//		for (i = 0; i < n; i++)a[i] = 0;
+//	}
+//	return 0;
+//}
+
+//题目3-3-7 投简历问题（值限制的推测最大概率
+
+//#define maxn 10001
+//#define maxm 10001
+//double posnew(double a, double b) {
+//	return 1 - (1 - a)*(1 - b);
+//}
+//double dpmain(int*a, double*b, int n, int m) {
+//	double dp[maxm] = { 0 };
+//	int i, j; for (i = 0; i <= n; i++)dp[i] = -1; dp[0] = 0;
+//	for (i = 0; i < m; i++)
+//		for (j = n; j >= a[i]; j--)
+//			if (dp[j - a[i]] >= 0)
+//				if (dp[j] < posnew(b[i], dp[j - a[i]]))
+//					dp[j] = posnew(b[i], dp[j - a[i]]);
+//	double max = dp[0];
+//	for (i = 0; i < n; i++)
+//		if (max < dp[i])max = dp[i];
+//	return max * 100;
+//}
+//int main() {
+//	int i, n, m, a[maxm] = { 0 };
+//	double b[maxm] = { 0 };
+//	while (1) {
+//		scanf("%d%d", &n, &m);
+//		if (n == 0 && m == 0)break;
+//		for (i = 0; i < m; i++)
+//			scanf("%d%lf", a + i, b + i);
+//		printf("%.1lf%%\n", dpmain(a, b, n, m));
+//		for (i = 0; i < m; i++) {
+//			a[i] = 0; b[i] = 0;
+//		}
+//	}
+//	return 0;
+//}
+
+//题目3-3-8 淘宝（条件限制下推测最大值
+
+//#define maxm 5001
+//#define maxn 501
+//void sortswap(int*p, int*q, int*v, int i, int tempj) {
+//	int temp;
+//	temp = p[tempj]; p[tempj] = p[i]; p[i] = temp;
+//	temp = q[tempj]; q[tempj] = q[i]; q[i] = temp;
+//	temp = v[tempj]; v[tempj] = v[i]; v[i] = temp;
+//	return;
+//}
+//void sortmain(int*p, int*q, int*v, int size) {
+//	int i, j, tempj;
+//	for (i = 0; i < size - 1; i++) {
+//		tempj = i;
+//		for (j = i + 1; j < size; j++)
+//			if (q[tempj] - p[tempj]>q[j] - p[j])
+//				tempj = j;
+//		if(i!=tempj)
+//			sortswap(p, q, v, i, tempj);
+//	}
+//	return;
+//}
+//int dpmain(int*p, int*q, int*v, int n, int m) {
+//	int i, j, dp[maxm] = { 0 };
+//	for (i = 0; i <= n; i++)dp[i] = 0; dp[0] = 0;
+//	for (i = 0; i < m; i++)
+//		for (j = n; j >= q[i]; j--)
+//				if (dp[j] < dp[j - p[i]] + v[i])
+//					dp[j] = dp[j - p[i]] + v[i];
+//	int max = dp[0];
+//	for (i = 0; i <= n; i++)
+//		if (max < dp[i])max = dp[i];
+//	return max;
+//}
+//int main() {
+//	int i, n, m, p[maxn] = { 0 }, q[maxn] = { 0 }, v[maxn] = { 0 };
+//	while (~scanf("%d%d", &n, &m)) {
+//		for (i = 0; i < n; i++)
+//			scanf("%d%d%d", p + i, q + i, v + i);
+//		sortmain(p, q, v, n);
+//		printf("%d\n", dpmain(p, q, v, m, n));
+//		for (i = 0; i < n; i++){
+//			p[i] = 0; q[i] = 0; v[i] = 0;
+//		}
+//	}
+//	return 0;
+//}
+
+/*======================================================================   #57 - #64  动态规划1：序列，塔   ======================================================================*/
+
+//题目3-2-1 max sum 总和最大的连续序列（总和 位置
+
+//void fun(int*a,int size,int casenum) {
+//	static int isfirst = 1;
+//	//最大和序列
+//	if (size < 0)return;
+//	int sumb = a[0], sumcur = 0, i, is = 0, ie = 0, start = 0, end = 0;
+//	for (i = 0; i < size; i++) {
+//		sumcur += a[i];
+//		ie = i;
+//		if (sumcur > sumb) {
+//			sumb = sumcur;
+//			start = is;
+//			end = ie;
+//		}
+//		if (sumcur < 0) {
+//			sumcur = 0;
+//			is = i + 1;
+//		}
+//	}
+//	//打印
+//	if (isfirst)isfirst = 0;
+//	else printf("\n");
+//	printf("Case %d:\n", casenum);
+//	printf("%d %d %d\n", sumb, start + 1, end + 1);
+//}
+//int main() {
+//	int N, n, l, i, *a = NULL;
+//	scanf("%d", &N);
+//	for (n = 1; n <= N; n++) {
+//		scanf("%d", &l);
+//		a = new int[l];
+//		for (i = 0; i < l; i++)
+//			scanf("%d", a + i);
+//		fun(a, l, n);
+//		delete[]a; a = NULL;
+//	}
+//}
+
+//题目3-2-2 jump jump 总和最大的上升序列（仅总和
+
+//void fun(int*a, int n) {
+//	int *dp = NULL; dp = new int[n];
+//	for (int i = 0; i < n; i++) {
+//		dp[i] = 0;
+//		for (int j = 0; j < i; j++)
+//			if (a[j]<a[i])
+//				if (a[i] + dp[j]>dp[i])dp[i] = a[i] + dp[j];
+//		if (dp[i] < a[i])dp[i] = a[i];
+//	}
+//	int ans = dp[0];
+//	for (int i = 0; i < n; i++)
+//		if (ans < dp[i])ans = dp[i];
+//	printf("%d\n", ans);
+//	delete[]dp;
+//}
+//int main() {
+//	int n, i, *a = NULL;
+//	while (1) {
+//		scanf("%d", &n); if (n == 0)break;
+//		a = new int[n];
+//		for (i = 0; i < n; i++)
+//			scanf("%d", a + i);
+//		fun(a, n);
+//		delete[]a; a = NULL;
+//	}
+//	return 0;
+//}
+
+//题目3-2-3 鼠标的重量与速度 求最长上升序列（长度 位置
+
+//#define maxl 1000
+//struct mou { int m, v, n; };
+//void mouswap(struct mou*a, struct mou*b) {
+//	int temp;
+//	temp = a->m; a->m = b->m; b->m = temp;
+//	temp = a->v; a->v = b->v; b->v = temp;
+//	temp = a->n; a->n = b->n; b->n = temp;
+//	return;
+//}
+//void mousortm(struct mou*a, int size) {
+//	int i, j, minm, minj;
+//	for (i = 0; i < size; i++) {
+//		minm = a[i].m; minj = i;
+//		for (j = i + 1; j < size; j++)
+//			if (minm>a[j].m) { minm = a[j].m; minj = j; }
+//		if (minj != i)mouswap(a + minj, a + i);
+//	}
+//}
+//int scanmain(struct mou *a) {
+//	int i, m, v;
+//	for (i = 0; i < maxl; i++) {
+//		a[i].m = 0; a[i].v = 0; a[i].n = 0;
+//	}
+//	i = 0;
+//	while (~scanf("%d%d", &a[i].m, &a[i].v)) { a[i].n = i + 1; i++; }
+//	return i;
+//}
+//void fun(struct mou *a, int size) {
+//	int i, j;
+//	int *dp = new int[size];
+//	for (i = 0; i < size; i++)dp[i] = 0;
+//	int qmax = 0, qmaxi = 0;
+//	for (i = 0; i < size; i++) {
+//		dp[i] = 1;
+//		for (j = 0; j < i; j++)
+//			if (a[i].v < a[j].v)
+//				if (dp[i] < dp[j] + 1)dp[i] = dp[j] + 1;
+//		if (qmax < dp[i]) { qmax = dp[i]; qmaxi = i; }
+//	}
+//	int q[maxl] = { 0 }, qi = qmax - 1;
+//	q[qi] = qmaxi; qi--;
+//	for (i = qmaxi; i >= 0; i--)
+//		if (a[i].v>a[q[qi + 1]].v&&dp[i] == qi + 1) {
+//			q[qi] = i;
+//			qi--;
+//		}
+//	printf("%d\n", qmax);
+//	for (i = 0; i < qmax; i++)
+//		printf("%d\n", a[q[i]].n);
+//}
+//int main() {
+//	struct mou a[maxl];
+//	int size = scanmain(a);
+//	mousortm(a, size);
+//	fun(a, size);
+//	return 0;
+//}
+
+//题目3-2-4 Humble Numbers 求最小邻近值（生成数列
+
+//#define dpmax 6000
+//int fun(int n) {
+//	int f[4] = { 2,3,5,7 }, i, j, fi, min;
+//	static long long dp[dpmax] = { 0 };
+//	dp[0] = 1;
+//	for (i = 1; i < n; i++)if (dp[i] == 0) {
+//		min = dp[i - 1];
+//		for (j = 0; j < i; j++)
+//			for (fi = 0; fi < 4; fi++)
+//				if (min == dp[i - 1]) {
+//					if (dp[j] * f[fi]>dp[i - 1])
+//						min = dp[j] * f[fi];
+//				}
+//				else if (min>dp[j] * f[fi] && dp[j] * f[fi]>dp[i - 1])
+//					min = dp[j] * f[fi];
+//		dp[i] = min;
+//	}
+//	return (int)dp[n - 1];
+//}
+//void printmain(int n, int re) {
+//	int add = 0; 
+//	if ((n % 100) < 14 && (n % 100) > 10)add += 10;
+//	switch (n % 10 + add)
+//	{
+//	case 1:printf("The %dst humble number is %d.\n", n, re); break;
+//	case 2:printf("The %dnd humble number is %d.\n", n, re); break;
+//	case 3:printf("The %drd humble number is %d.\n", n, re); break;
+//	default:printf("The %dth humble number is %d.\n", n, re); break;
+//		break;
+//	}
+//	return;
+//}
+//int main() {
+//	int n;
+//	fun(5842);
+//	while (1) {
+//		scanf("%d", &n); if (n == 0)break;
+//		printmain(n, fun(n));
+//	}
+//	return 0;
+//}
+
+//题目3-2-5 堆积长方体 带限制的总和最大的序列（仅总和
+
+//struct __cub__ { int x, y, z; };
+//#define cub struct __cub__
+//#define maxl 100
+//void cubreset(cub*a,int size) {
+//	int i; for (i = 0; i < size; i++) {
+//		a[i].x = 0; a[i].y = 0; a[i].z = 0;
+//	}return;
+//}
+//void cubswap(cub*a, cub*b) {
+//	int temp;
+//	temp = a->x; a->x = b->x; b->x = temp;
+//	temp = a->y; a->y = b->y; b->y = temp;
+//	temp = a->z; a->z = b->z; b->z = temp;
+//	return;
+//}
+//void cubswing(cub*a, int I, int maxj) {
+//	cub temp; cubreset(&temp, 1);
+//	cubswap(&temp, a + maxj);
+//	int i; for (i = maxj - 1; i >= I; i--)
+//		cubswap(a + i, a + i + 1);
+//	cubswap(&temp, a + I);
+//	return;
+//}
+//void cubsort(cub*a, int size) {
+//	int i, j, max, maxj;
+//	for (i = 0; i < size - 1; i++) {
+//		max = a[i].y; maxj = i;
+//		for (j = i + 1; j < size; j++)
+//			if (max < a[j].y) { max = a[j].y; maxj = j; }
+//		if (i != maxj)cubswap(a + i, a + maxj);
+//	}
+//	for (i = 0; i < size - 1; i++) {
+//		max = a[i].x; maxj = i;
+//		for (j = i + 1; j < size; j++)
+//			if (max < a[j].x) { max = a[j].x; maxj = j; }
+//		if (i != maxj)cubswing(a, i, maxj);
+//	}
+//	return;
+//}
+//int scanmain(cub*a) {
+//	cubreset(a, maxl);
+//	int n, c, x, y, z, f;
+//	scanf("%d", &n); if (n == 0)return n;
+//	c = 0;
+//	while (n--) {
+//		scanf("%d%d%d", &x, &y, &z);
+//		a[c].z = z; f = x >= y ? 1 : 0;
+//		a[c].x = f ? x : y;
+//		a[c].y = f ? y : x;
+//		c++;
+//		a[c].z = x; f = y >= z ? 1 : 0;
+//		a[c].x = f ? y : z;
+//		a[c].y = f ? z : y;
+//		c++;
+//		a[c].z = y; f = z >= x ? 1 : 0;
+//		a[c].x = f ? z : x;
+//		a[c].y = f ? x : z;
+//		c++;
+//	}
+//	return c;
+//}
+//void printmain(int i, int n) {
+//	printf("Case %d: maximum height = %d\n", i, n); return;
+//}
+//int isfit(cub*a, cub*b) {
+//	//a是放在上方的 a和b自己的x均大于y
+//	if (a->x >= b->x)return 0;
+//	if (a->y >= b->y)return 0;
+//	return 1;
+//}
+//int fun(cub*a, int size) {
+//	int dp[maxl] = { 0 }, i, j;
+//	for (i = 0; i < size; i++) {
+//		dp[i] = a[i].z;
+//		for (j = 0; j < i; j++)
+//			if (isfit(a + i, a + j))
+//				if (dp[i] < dp[j] + a[i].z)
+//					dp[i] = dp[j] + a[i].z;
+//	}
+//	int max = dp[0];
+//	for (i = 1; i < size; i++)
+//		if (max < dp[i])max = dp[i];
+//	return max;
+//}
+//int main() {
+//	int i, n; cub a[maxl];
+//	i = 1;
+//	while (1) {
+//		n = scanmain(a);//scanmain有初始化结构体a
+//		if (n == 0)break;
+//		cubsort(a, n);
+//		n = fun(a, n);//返回最大高度
+//		printmain(i, n);
+//		i++;
+//	}
+//	return 0;
+//}
+
+//题目3-2-6 数塔 总和最大的连续路径（仅总和
+
+//#define maxl 100
+//void reset(int(*p)[maxl], int size) {
+//	int i,j;
+//	for (i = 0; i < size; i++)
+//		for (j = 0; j <= i; j++)//数塔
+//			p[i][j] = 0;
+//	return;
+//}
+//void scanmain(int(*p)[maxl], int size) {
+//	int i, j;
+//	for (i = 0; i < size; i++)
+//		for (j = 0; j <= i; j++)//数塔
+//			scanf("%d", &p[i][j]);
+//	return;
+//}
+//int dpmain(int(*a)[maxl],int size) {
+//	int dp[maxl][maxl]; reset(dp, maxl);
+//	int dpi, dpj, ai, aj;
+//	dp[0][0] = a[0][0];
+//	for (dpi = 1; dpi < size; dpi++)
+//		for (dpj = 0; dpj <= dpi; dpj++) {
+//			dp[dpi][dpj] = a[dpi][dpj];
+//			ai = dpi - 1;
+//			for (aj = dpj - 1; aj <= dpj; aj++)
+//				if (dp[dpi][dpj] < dp[ai][aj] + a[dpi][dpj])
+//					dp[dpi][dpj] = dp[ai][aj] + a[dpi][dpj];
+//		}
+//	int max = dp[size - 1][0], i = 0;
+//	for (i = 0; i < size; i++)
+//		if (max < dp[size - 1][i])
+//			max = dp[size - 1][i];
+//	return max;
+//}
+//int main() {
+//	int a[maxl][maxl];
+//	reset(a, maxl);
+//	int n, re, size = 0;
+//	scanf("%d", &n);
+//	while (n--) {
+//		reset(a, size);
+//		scanf("%d", &size);
+//		scanmain(a, size);
+//		re = dpmain(a, size);
+//		printf("%d\n", re);
+//	}
+//  return 0;
+//}
+
+//题目3-2-7 接馅饼 总和最大的连续路径（仅总和
+
+//第二维是时间 第一维是位置 值是饼的数量
+////提交时maxt为100001
+//#define maxt 10001
+//#define maxl 11
+//void reset(int(*p)[maxl], int size) {
+//	int i,j;
+//	for (i = 0; i < size; i++)
+//		for (j = 0; j < maxl; j++)//表
+//			p[i][j] = 0;
+//	return;
+//}
+//int scanmain(int(*p)[maxl], int size) {
+//	int i, t, x, tmax = 0;
+//	for (i = 0; i < size; i++) {
+//		scanf("%d%d", &x, &t);
+//		p[t][x]++;
+//		if (tmax < t)tmax = t;
+//	}
+//	return tmax + 1;
+//}
+//void limexpand(int*lim) {
+//	int i, size = maxl;
+//	for (i = 1; i < maxl - 1; i++)
+//		if (lim[i] == 1 && lim[i - 1] == 0)lim[i - 1] = 1;
+//	for (i = maxl - 2; i > 0; i--)
+//		if (lim[i] == 1 && lim[i + 1] == 0)lim[i + 1] = 1;
+//		return;
+//}
+//int dpmain(int(*a)[maxl],int size) {
+//	int dp[maxt][maxl]; reset(dp, maxt);
+//	int dpi, dpj, ai, aj;
+//	int lim[maxl] = { 0 }; lim[5] = 1;
+//
+//	for (dpi = 1; dpi < size; dpi++) {
+//		limexpand(lim);
+//		for (dpj = 0; dpj < maxl; dpj++)if (lim[dpj]) {
+//			dp[dpi][dpj] = a[dpi][dpj];
+//			ai = dpi - 1;
+//			for (aj = (dpj > 0 ? dpj - 1 : dpj); aj <= (dpj < 10 ? dpj + 1 : dpj); aj++)
+//				if(lim[aj])
+//					if (dp[dpi][dpj] < dp[ai][aj] + a[dpi][dpj])
+//					dp[dpi][dpj] = dp[ai][aj] + a[dpi][dpj];
+//		}
+//	}
+//
+//	int max = dp[size - 1][0], j = 0;
+//	for (j = 0; j < maxl; j++)
+//		if (max < dp[size - 1][j])
+//			max = dp[size - 1][j];
+//	return max;
+//}
+//int main() {
+//	int a[maxt][maxl];
+//	reset(a, maxt);
+//	int re, size = 0;
+//	while (1) {
+//		reset(a, size);
+//		scanf("%d", &size);
+//		if (size == 0)break;
+//		size = scanmain(a, size);
+//		re = dpmain(a, size);
+//		printf("%d\n", re);
+//	}
+//	return 0;
+//}
+
+//题目3-2-8 表格内行动 总和最大的连续路径（仅总和
+
+//#define maxn 21
+//#define maxm 1001
+//void scanmain(int(*a)[maxm],int n,int m) {
+//	int i, j;
+//	for (i = 0; i < n; i++)
+//		for (j = 0; j < m; j++)
+//			scanf("%d", &a[i][j]);
+//	return;
+//}
+//void reset(int(*a)[maxm], int n, int m) {
+//	int i, j;
+//	for (i = 0; i < n; i++)
+//		for (j = 0; j < m; j++)
+//			a[i][j] = 0;
+//	return;
+//}
+//int isfit(int pi, int pj, int ai, int aj) {
+//	int i;
+//	if (pi == ai) {
+//		if (pj == aj + 1)return 1;
+//		i = 2; while ((aj + 1)*i < (pj + 1))i++;
+//		if ((aj + 1)*i == pj + 1)return 1;
+//		return 0;
+//	}
+//	if (pi == ai + 1 && pj == aj)return 1;
+//	return 0;
+//}
+//void dpfun(int(*dp)[maxm], int(*a)[maxm], int pi, int pj, int ai, int aj) {
+//	if (dp[pi][pj] < dp[ai][aj] + a[pi][pj]) {
+//		dp[pi][pj] = dp[ai][aj] + a[pi][pj];
+//		//printf(" [%d %d]->[%d %d] %d->%d\n", ai + 1, aj + 1, pi + 1, pj + 1, dp[ai][aj], dp[pi][pj]);
+//	}return;
+//}
+//int fun(int(*a)[maxm], int n, int m) {
+//	int dp[maxn][maxm]; reset(dp, maxn, maxm);
+//	//斜向遍历
+//	int pi, pj, ai, aj, k;
+//	dp[0][0] = a[0][0];
+//	for (k = 2; k < m + n; k++)
+//		for (pj = 0; pj < k; pj++) {
+//			pi = k - pj - 1;
+//			if (pi < n&&pj < m) {
+//				//dp
+//				dp[pi][pj] = -2000000000; // 连续路径要求
+//				ai = pi;
+//				for (aj = 0; aj < pj; aj++)
+//					if (isfit(pi, pj, ai, aj))
+//						dpfun(dp, a, pi, pj, ai, aj);
+//				aj = pj;
+//				for (ai = 0; ai < pi; ai++)
+//					if (isfit(pi, pj, ai, aj))
+//						dpfun(dp, a, pi, pj, ai, aj);
+//			}
+//		}
+//	return dp[n - 1][m - 1];
+//}
+//int main() {
+//	int m, n, c, a[maxn][maxm];
+//	reset(a, maxn, maxm);
+//	scanf("%d", &c); while (c--) {
+//		scanf("%d%d", &n, &m);
+//		scanmain(a, n, m);
+//		printf("%d\n", fun(a, n, m));
+//		reset(a, n, m);
+//	}
+//	return 0;
+//}
+
+/*======================================================================   #49 - #56  递推&矩阵快速幂   ======================================================================*/
+
+//题目3-1-1 上楼梯
+
+//int main() {
+//	int j, J, n, i, a[41] = { 0 };
+//	a[1] = 1; a[2] = 1;
+//	for (i = 3; i <= 40; i++)
+//		a[i] = a[i - 1] + a[i - 2];
+//	scanf("%d", &J);
+//	for (j = 0; j < J; j++) {
+//		scanf("%d", &n);
+//		printf("%d\n", a[n]);
+//	}
+//	return 0;
+//}
+
+//题目3-1-2 蜜蜂
+
+//int main() {
+//	int j, J, m, n, i;long long a[50] = { 0 };
+//	a[0] = 1; a[1] = 1;
+//	for (i = 2; i < 50; i++)
+//		a[i] = a[i - 1] + a[i - 2];
+//	scanf("%d", &J);
+//	for (j = 0; j < J; j++) {
+//		scanf("%d%d", &m, &n);
+//		printf("%lld\n", a[n - m]);
+//	}
+//	return 0;
+//}
+
+//题目3-1-3 地砖
+
+//int main() {
+//	int k, n, i; long long a[31] = { 0 };
+//	a[1] = 1; a[2] = 3;
+//	for (i = 3; i <= 30; i++)a[i] = a[i - 1] + a[i - 2] * 2;
+//	scanf("%d", &k);
+//	while (k--) {
+//		scanf("%d", &n);
+//		printf("%d\n", a[n]);
+//	}
+//	return 0;
+//}
+
+//题目3-1-4 骨牌
+
+//int main() {
+//	int k, n, i; long long a[31] = { 0 };
+//	a[1] = 1; a[2] = 3;
+//	for (i = 3; i <= 30; i++)a[i] = a[i - 1] + a[i - 2] * 2;
+//	scanf("%d", &k);
+//	while (k--) {
+//		scanf("%d", &n);
+//		printf("%d\n", a[n]);
+//	}
+//	return 0;
+//}
+
+//题目3-1-5 统计问题
+
+//int main() {
+//	int n, i, c; long long a[21] = { 0 };
+//	a[0] = 1; a[1] = 3;
+//	int d = 0, t = 1, oldd = 0;
+//	for (i = 2; i < 21; i++) {
+//		oldd = d;
+//		d = 2 * t + d; t = t + oldd;
+//		a[i] = d * 2 + t * 3;
+//	}
+//	scanf("%d", &c);
+//	while (c--) {
+//		scanf("%d",&n);
+//		printf("%d\n", a[n]);
+//	}
+//	return 0;
+//}
+
+//题目3-1-6 涂色问题
+
+//int main() {
+//	int n, i; long long a[51] = { 3,6,6 };
+//	for (i = 3; i < 51; i++)a[i] = a[i - 1] + a[i - 2] * 2;
+//	while (~scanf("%d",&n)) {
+//			printf("%lld\n", a[n-1]);
+//	}
+//	return 0;
+//}
+
+//题目3-1-7 队列问题
+
+//#define cl 1000
+//void charadd(char*a, char*b) {
+//	int ae = cl - 1, be = cl - 1;
+//	while (a[ae] == 0)ae--; while (b[be] == 0)be--;
+//	int i, s = 0, ce = ae; if (be > ce)ce = be;
+//	for (i = 0; i <= ce; i++) {
+//		if (i <= ae)s += a[ae - i] - 48;
+//		if (i <= be)s += b[be - i] - 48;
+//		a[ce - i] = s % 10 + 48;
+//		s /= 10;
+//	}
+//	if (s) { 
+//		for (i = ce; i >= 0; i--)a[i + 1] = a[i];
+//		a[0] = 49;
+//	}
+//	return;
+//}
+//int main() {
+//	int i, n; char temp[1001][cl] = { {0} };
+//	temp[1][0] = 1 + 48;
+//	temp[2][0] = 2 + 48;
+//	temp[3][0] = 4 + 48;
+//	temp[4][0] = 7 + 48;
+//	for (i = 5; i <= 1000; i++) {
+//		charadd(temp[i], temp[i - 1]);
+//		charadd(temp[i], temp[i - 2]);
+//		charadd(temp[i], temp[i - 4]);
+//	}
+//	while (~scanf("%d", &n)) {
+//		printf("%s\n", temp[n]);
+//	}
+//	return 0;
+//}
+
+//题目3-1-8 队列问题2
+
+////直接递推 超时
+////int fun(int* k, int L, int M) {
+////	k[0] = 0; k[1] = 2;
+////	k[2] = 4; k[3] = 6, k[4] = 9;
+////	int i;
+////	if (L < 5)return k[L];
+////	for (i = 5; i <= L; i++)
+////	{
+////		k[i % 5] = k[(i - 1) % 5] + k[(i - 3) % 5] + k[(i - 4) % 5];
+////		k[i % 5] %= M;
+////	}
+////	i = L;
+////	return k[i % 5];
+////}
+////
+////矩阵-用于快速幂递推
+//struct mat { int **v = NULL; int size; };
+//void matnew(struct mat **a, int size) {
+//	int i, j;
+//	*a = new struct mat;
+//	(*a)->v = new int*[size];
+//	for (i = 0; i < size; i++) {
+//		(*a)->v[i] = new int[size];
+//		for (j = 0; j < size; j++)(*a)->v[i][j] = 0;
+//	}
+//	(*a)->size = size; return;
+//}
+//void matdel(struct mat **a) {
+//	int i, size = (*a)->size;
+//	for (i = 0; i < size; i++)
+//		delete[](*a)->v[i];
+//	delete[](*a)->v; (*a)->v = NULL;
+//	delete[](*a);
+//	return;
+//}
+//void matcopy(struct mat *a, struct mat *b) {
+//	int i, j, size = a->size;
+//	for (i = 0; i < size; i++) {
+//		for (j = 0; j < size; j++)
+//			a->v[i][j] = b->v[i][j];
+//	}return;
+//}
+//void matprintf(struct mat *a) {
+//	int i, j, size = a->size;
+//	for (i = 0; i < size; i++) {
+//		for (j = 0; j < size; j++)
+//			printf(" %d", a->v[i][j]);
+//		printf("\n");
+//	}printf("\n"); return;
+//}
+//void matm(struct mat *a, struct mat *b, int m = 0) {
+//	int i, j, k, temp, size = a->size;
+//	struct mat *c = NULL; matnew(&c, size);
+//	for (i = 0; i < size; i++) {
+//		for (j = 0; j < size; j++) {
+//			temp = 0;
+//			for (k = 0; k < size; k++) {
+//				if (m)temp += (a->v[i][k] * b->v[k][j]) % m;
+//				else temp += a->v[i][k] * b->v[k][j];
+//				if (m)temp %= m;
+//			}
+//			c->v[i][j] = temp;
+//		}
+//	}
+//	matcopy(a, c); matdel(&c); return;
+//}
+//void matfastpow(struct mat *a, int time, int m = 0) {
+//	int i, j, size = a->size;
+//	struct mat *c = NULL; matnew(&c, a->size);
+//	matcopy(c, a);
+//	for (i = 0; i < size; i++)
+//		for (j = 0; j < size; j++)
+//			if (i == j)a->v[i][j] = 1;
+//			else a->v[i][j] = 0;
+//			while (time) {
+//				if (time % 2)matm(a, c, m);
+//				matm(c, c, m);
+//				time /= 2;
+//			}
+//			matdel(&c); return;
+//}
+//int fun(int L, int M) {
+//	if (L <= 3)switch (L)
+//	{
+//	case 0:return 1;
+//	case 1:return 2;
+//	case 2:return 4;
+//	case 3:return 6;
+//	}
+//	struct mat *a = NULL; matnew(&a, 4);
+//	a->v[0][0] = 1; a->v[0][2] = 1; a->v[0][3] = 1;
+//	a->v[1][0] = 1; a->v[2][1] = 1; a->v[3][2] = 1;
+//	matfastpow(a, L - 3, M);
+//	struct mat *k = NULL; matnew(&k, 4);
+//	k->v[0][0] = 6; k->v[1][0] = 4; k->v[2][0] = 2; k->v[3][0] = 1;
+//	matm(a, k, M);
+//	int re = a->v[0][0];
+//	matdel(&a); matdel(&k);
+//	return re;
+//}
+//int main() {
+//	int L, M, i;
+//	while (~scanf("%d%d", &L, &M)) {
+//		printf("%d\n", fun(L, M));
+//	}
+//	return 0;
+//}
