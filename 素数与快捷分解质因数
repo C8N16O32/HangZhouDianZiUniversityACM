@@ -51,10 +51,19 @@ void prifcnm(struct pri *a,int n, int m) {
 }
 //素数因子导出
 void pri2lint(struct pri *a, struct lint *b) {
-	int i, j;
+	int i, j, k;
+	struct lint *base = NULL; lintnew(&base, lenstep);
 	for (i = 0; i < a->prisize; i++)
-		if(a->priv[i])
-			for (j = 0; j < a->priv[i]; j++)
-				lintm(b, a->prik[i]);
+		if (a->priv[i]){
+			k = a->priv[i];
+			lintreset(base); linta(base, 1); lintm(base, a->prik[i]);
+			while (k) {
+				if (k % 2)lintm(b, base);
+				if (k == 1)break;
+				lintm(base, base);
+				k = k / 2;
+			}
+		}
+	lintdelete(&base);
 	return;
 }
