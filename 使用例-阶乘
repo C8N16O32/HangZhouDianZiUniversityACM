@@ -1,0 +1,32 @@
+#include "stdio.h"
+//C大数类 的全部内容
+//素数类 的全部内容
+int main() {
+	int i, n;
+	struct lint *a = NULL; struct pri *p = NULL;
+	time_t s, e1, e2, e3, e4;
+	lintnew(&a);
+	while (1) {
+		printf("输入n (0<n<=1亿) 开始计算n!:");
+		scanf("%d", &n);
+		//时间
+		s = clock();
+		if (n < 1)n = 1; 
+		priset(&p, n + 1);
+		e1 = clock() - s;
+		for (i = 2; i <= n; i++)
+			prif1(p, i, 1);
+		e2 = clock() - s;
+		linta(a, 1); pri2lint(p, a);
+		e3 = clock() - s;
+		lintprintf(a);
+		pridelete(p);
+		lintresetv(a); lintchecksize(a, 0);
+		e4 = clock() - s;
+		printf("\n%d 筛质数|%d(+%d) 分解质因数%d|%d(+%d) 运算%d|%d(+%d) 打印%d\n", (int)e1
+			, (int)e2, (int)e2 - e1
+			, (int)e3, (int)e3 - e2
+			, (int)e4, (int)e4 - e3);
+	}
+	return 0;
+}
