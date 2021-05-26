@@ -27,6 +27,12 @@ void priset(struct pri**a,int prisize) {
 void privreset(struct pri*a) {
 	int i; for (i = 0; i < a->prisize; i++)a->priv[i] = 0; return;
 }
+void pridelete(struct pri*a) {
+	delete[] a->priflag; a->priflag = NULL;
+	delete[] a->prik; a->prik = NULL;
+	delete[] a->priv; a->priv = NULL;
+	a->prisize = 0; return;
+}
 //素数因子计数-一个数字
 void prif1(struct pri *a,int num,int mode=1) {
 	while (a->priflag[num]) {
@@ -51,19 +57,33 @@ void prifcnm(struct pri *a,int n, int m) {
 }
 //素数因子导出
 void pri2lint(struct pri *a, struct lint *b) {
-	int i, j, k;
-	struct lint *base = NULL; lintnew(&base, lenstep);
+	int i, k, ti, tb, tk = 2, tmin = 16;
+	struct lint *base = NULL, *temp[32] = { NULL };
+	lintnew(&base);
+	for (i = 0; i < 32; i++) { lintnew(temp + i); linta(temp[i], 1); }
+
 	for (i = 0; i < a->prisize; i++)
-		if (a->priv[i]){
+		if (a->priv[i]) {
 			k = a->priv[i];
-			lintreset(base); linta(base, 1); lintm(base, a->prik[i]);
+			lintresetv(base); linta(base, 1); lintm(base, a->prik[i]);
 			while (k) {
-				if (k % 2)lintm(b, base);
+				if (k % 2) {
+					ti = 0; tb = tmin;
+					while (base->len > tb) { tb *= tk; ti++; }
+					lintm(temp[ti], base);
+					while (temp[ti]->len >= tb) {
+						lintm(temp[ti + 1], temp[ti]);
+						lintresetv(temp[ti]); linta(temp[ti], 1);
+						tb *= tk; ti++;
+					}
+				}
 				if (k == 1)break;
 				lintm(base, base);
 				k = k / 2;
 			}
 		}
+	for (i = 0; i < 32; i++)lintm(b, temp[i]);
 	lintdelete(&base);
+	for (i = 0; i < 32; i++)lintdelete(temp + i);
 	return;
 }
