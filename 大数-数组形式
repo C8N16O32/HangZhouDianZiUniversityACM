@@ -195,13 +195,17 @@ void lintm1(struct lint *x, struct lint *y) {
 }
 struct lintm1 { int len = 0; int size = 0; struct lint **stack = NULL; int*posj = NULL; int *n = NULL; };
 #define lintm1minl 64
-#define lintm1checksize(s, tsize) if ( (tsize) > (s)->size )lintm1resetsize(s, tsize)
+#define lintm1checksize(s, tsize) if ( (tsize) > (s)->size||(tsize) >= lintm1minl && (tsize) * 2 <= (s)->size  )lintm1resetsize(s, tsize)
 #define lintm1return for (i = curi * 6; i < curi * 6 + 6; i++)lintresetv(s->stack[i]); s->n[curi] = 0; s->posj[curi] = 0; s->len--; curi = s->len - 1; curj = s->posj[curi]; continue
 #define lintm1recursive s->posj[curi] = curj; lintm1checksize(s, s->len + 1); s->len++; curi = s->len - 1; curj = 0; continue
 void lintm1resetsize(struct lintm1 *a,int size) {
 	int i = lintm1minl; while (i < size)i *= 2; size = i;
-	//stack 扩大空间
+	//stack
 	struct lint**temp = NULL; temp = new struct lint*[size * 6]; for (i = 0; i < size * 6; i++)temp[i] = NULL;
+	if (size < a->size) {
+		for (i = size * 6; i < a->size * 6; i++)lintdelete(a->stack + i);
+		a->size = size; 
+	}
 	for (i = 0; i < a->size * 6; i++) { temp[i] = a->stack[i]; }
 	for (i = 0; i < a->size * 6; i++)a->stack[i] = NULL;
 	for (i = a->size * 6; i < size * 6; i++)lintnew(temp + i);
