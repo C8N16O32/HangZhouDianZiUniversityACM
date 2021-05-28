@@ -1,4 +1,6 @@
 #include "stdio.h"
+#include "math.h"//如果大数类使用了FFT乘法（lintm2）
+#include "time.h"//如果要保留计算时间的功能
 //C大数类 的全部内容
 //素数类 的全部内容
 int main() {
