@@ -270,7 +270,7 @@ void lintm2_FFT(comp*a, const int fla, int *rev, int size) {
 	return;
 }
 void lintm2(lint *x, lint *y) {
-	if (x->len == 1 && y->v[0] == 1) {
+	if (x->len == 1 && x->v[0] == 1) {
 		lintcopy(x, y);
 		return;
 	}
