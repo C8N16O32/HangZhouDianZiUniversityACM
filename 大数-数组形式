@@ -149,7 +149,7 @@ void lints(lint *a, int num, int section = 0) {
 }
 //lint_muti
 #define lintm2minl 4096
-#define lintm2maxl 2000000000
+#define lintm2maxl 2097152
 void lintm2(lint *x, lint *y);
 void lintm0(lint *a, lint *b) {
 	if (a->len == 1 && a->v[0] == 1) {
