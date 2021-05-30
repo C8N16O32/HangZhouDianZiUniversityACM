@@ -203,7 +203,10 @@ void lintm1sum(lint *q, lint *p, lint *k, int n) {
 	return;
 };
 void lintm1(lint *x, lint *y) {
-	if (x->len == 0 || y->len == 0) {
+	if (y->len == 1 && y->v[0] == 1) {
+		return;
+	}
+	if (x->len == 0 || x->len == 0) {
 		lintresetv(x);
 		return;
 	}
