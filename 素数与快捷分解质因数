@@ -34,14 +34,27 @@ void pridelete(struct pri*a) {
 	a->prisize = 0; return;
 }
 //素数因子计数-一个数字
-void prif1(struct pri *a,int num,int mode=1) {
+void prif1(pri *a, int num, int mode = 1) {
+	if (num <= 1)return;
+	int priord = 0;
+	//合数
 	while (a->priflag[num]) {
-		a->priv[a->priflag[num] - 1] += mode;
-		num /= a->prik[a->priflag[num] - 1];
+		priord = a->priflag[num] - 1;
+		a->priv[priord] += mode;
+		num /= a->prik[priord];
 	}
-	int i = 0;
-	while (a->prik[i] != num)i++;
-	if (i < a->prisize)a->priv[i]++;
+	//现在数据是质数
+	if (num == a->prik[priord]) { a->priv[priord] += mode; return; }
+	int low = 0, high = a->prisize - 1;
+	while (low <= high) {
+		priord = (low + high) / 2;
+		if (a->prik[priord] == num)break;
+		if (a->prik[priord] > num)
+			high = priord - 1;
+		else
+			low = priord + 1;
+	}
+	a->priv[priord] += mode;
 	return;
 }
 //素数因子计数-排列数
