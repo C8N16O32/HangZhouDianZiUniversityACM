@@ -37,7 +37,7 @@ void pridelete(pri*a) {
 	delete[] a->priv; a->priv = NULL;
 	a->prisize = 0; return;
 }
-//素数因子计数-一个数字
+//分解质因数-一个数字
 void prif1(pri *a, int num, int mode = 1) {
 	if (num <= 1)return;
 	int priord = 0;
@@ -62,18 +62,47 @@ void prif1(pri *a, int num, int mode = 1) {
 	a->priv[priord] += mode;
 	return;
 }
-//素数因子计数-排列数
-void prifcnm(pri *a,int n, int m) {
+//分解质因数-阶乘
+void priffact(pri *a, int num, int mode = 1) {
+	if (num <= 1)return;
+	int nummax = num, nums = 2;
+	int priord, low, high;
+	for (nums = 2; nums <= nummax; nums++) {
+		num = nums;
+		priord = 0;
+		//合数
+		while (a->priflag[num]) {
+			priord = a->priflag[num] - 1;
+			a->priv[priord] += mode;
+			num /= a->prik[priord];
+		}
+		//现在数据是质数
+		if (num == a->prik[priord]) { a->priv[priord] += mode; continue; }
+		low = 0; high = a->prisize - 1;
+		if (num < a->prik[priord])high = priord - 1;
+		while (low <= high) {
+			priord = (low + high) / 2;
+			if (a->prik[priord] == num)break;
+			if (a->prik[priord] > num)
+				high = priord - 1;
+			else
+				low = priord + 1;
+		}
+		a->priv[priord] += mode;
+	}
+	return;
+}
+//分解质因数-排列数
+void prifcnm(pri *a, int n, int m) {
 	if (n - m < m)m = n - m; int i;
 	privreset(a);
 	//re=n!/(n-m)!
-	for (i = n - m + 1; i <= n; i++)
-		prif1(a, i, 1);
+	priffact(a, n, 1);
+	priffact(a, n - m, -1);
 	//re=re/m!
-	for (i = 1; i <= m; i++)
-		prif1(a, i, -1);
+	priffact(a, m, -1);
 }
-//素数因子导出
+//分解质因数表导出为大数
 void pri2lint(pri *a, lint *b) {
 	int i, k, ti, tb, tk = 2, tmin = 16;
 	lint *base = NULL, *temp[32] = { NULL };
