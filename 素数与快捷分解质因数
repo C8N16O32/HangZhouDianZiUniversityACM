@@ -1,33 +1,37 @@
 //素数&素数因子
 struct pri { int*prik = NULL, *priflag = NULL, *priv = NULL, prisize = 0; };
-void priset(struct pri**a,int prisize) {
-	if (*a == NULL)*a = new struct pri;
-	(*a)->priflag = new int[prisize];
-	int i = 0, j = 0, k = 1;
-	for (i = 0; i < prisize; i++)(*a)->priflag[i] = 0;
-	for (i = 2; i < 230; i++)
-		if (!(*a)->priflag[i]) {
+void priset(pri*a,int prisize) {
+	a->priflag = new int[prisize];
+	int i = 0, j = 0, k = 1, I = 0;
+	for (i = 0; i < prisize; i++)a->priflag[i] = 0;
+	i = 1; while (i*i < prisize&&i*i>0)i++; I = i;
+	for (i = 2; i < I; i++)
+		if (!a->priflag[i]) {
 			for (j = i * 2; j < prisize; j += i)
-				(*a)->priflag[j] = k;
+				a->priflag[j] = k;
 			k++;
 		}
 	j = 0;
-	for (i = 2; i < prisize; i++)if ((*a)->priflag[i] == 0)j++;
-	(*a)->prik = new int[j];
+	for (i = 2; i < prisize; i++)if (a->priflag[i] == 0)j++;
+	a->prik = new int[j];
 	i = 0; j = 2;
-	while (j < prisize) { if ((*a)->priflag[j] == 0) { (*a)->prik[i] = j; i++; }j++; }
+	while (j < prisize) { if (a->priflag[j] == 0) { a->prik[i] = j; i++; }j++; }
 	prisize = i;
 
-	(*a)->priv = new int[prisize];
+	a->priv = new int[prisize];
 	for (i = 0; i < prisize; i++)
-		(*a)->priv[i] = 0;
-	(*a)->prisize = prisize;
+		a->priv[i] = 0;
+	a->prisize = prisize;
 	return;
 }
-void privreset(struct pri*a) {
+void priset(pri**ap, int prisize) {
+	if (*ap == NULL)*ap = new pri;
+	priset(*ap, prisize); return;
+}
+void privreset(pri*a) {
 	int i; for (i = 0; i < a->prisize; i++)a->priv[i] = 0; return;
 }
-void pridelete(struct pri*a) {
+void pridelete(pri*a) {
 	delete[] a->priflag; a->priflag = NULL;
 	delete[] a->prik; a->prik = NULL;
 	delete[] a->priv; a->priv = NULL;
@@ -46,6 +50,7 @@ void prif1(pri *a, int num, int mode = 1) {
 	//现在数据是质数
 	if (num == a->prik[priord]) { a->priv[priord] += mode; return; }
 	int low = 0, high = a->prisize - 1;
+	if (num < a->prik[priord])high = priord - 1;
 	while (low <= high) {
 		priord = (low + high) / 2;
 		if (a->prik[priord] == num)break;
@@ -58,7 +63,7 @@ void prif1(pri *a, int num, int mode = 1) {
 	return;
 }
 //素数因子计数-排列数
-void prifcnm(struct pri *a,int n, int m) {
+void prifcnm(pri *a,int n, int m) {
 	if (n - m < m)m = n - m; int i;
 	privreset(a);
 	//re=n!/(n-m)!
@@ -69,12 +74,18 @@ void prifcnm(struct pri *a,int n, int m) {
 		prif1(a, i, -1);
 }
 //素数因子导出
-void pri2lint(struct pri *a, struct lint *b) {
+void pri2lint(pri *a, lint *b) {
 	int i, k, ti, tb, tk = 2, tmin = 16;
-	struct lint *base = NULL, *temp[32] = { NULL };
+	lint *base = NULL, *temp[32] = { NULL };
 	lintnew(&base);
 	for (i = 0; i < 32; i++) { lintnew(temp + i); linta(temp[i], 1); }
 
+	int TI = 0;
+	if (a->priv[0]>0 && a->priv[2]>0) {//末尾的0
+		ti = a->priv[2]; if (ti > a->priv[0])ti = a->priv[0];
+		ti = ti / 8; a->priv[0] -= ti * 8; a->priv[2] -= ti * 8;
+		TI = ti;
+	}
 	for (i = 0; i < a->prisize; i++)
 		if (a->priv[i]) {
 			k = a->priv[i];
@@ -96,6 +107,13 @@ void pri2lint(struct pri *a, struct lint *b) {
 			}
 		}
 	for (i = 0; i < 32; i++)lintm(b, temp[i]);
+	//末尾的0
+	if (TI) { 
+		lintchecksize(b, b->len + TI); 
+		for (i = b->len + TI - 1; i >= TI; i--)b->v[i] = b->v[i - TI];
+		for (i = 0; i < TI; i++)b->v[i] = 0;
+		b->len += TI;
+	}
 	lintdelete(&base);
 	for (i = 0; i < 32; i++)lintdelete(temp + i);
 	return;
