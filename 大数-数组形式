@@ -1,6 +1,6 @@
 //C大数类
 struct lint { int len = 0; int size = 0; int* v = NULL; };//length、size、value
-#define lintminl 32
+#define lintminl 64
 #define lintbase 100000000
 #define lintchecksize(a, tsize) if ( (tsize) > (a)->size ||(tsize) >= lintminl && (tsize) * 2 <= (a)->size )lintresetsize(a, tsize)
 #define lintnewstatic(a) static lint *a = NULL; if (a != NULL)lintresetv(a); else lintnew(&a)
@@ -64,6 +64,11 @@ void lintprintf(lint *a) {
 		if (isfirst)printf("0");
 		else printf("%s", dest);
 		printf("\n");
+		//长度
+		i = a->v[a->len - 1]; j = 0;
+		while (i > 0) { i /= 10; j++; }
+		printf("解的总长度：%d\n", j - 8 + a->len * 8);
+		//长度 end
 		return;
 }
 void lintsprintf(lint *a, char* temp0, int tempsize = -1) {
@@ -152,10 +157,6 @@ void lints(lint *a, int num, int section = 0) {
 #define lintm2maxl 2097152
 void lintm2(lint *x, lint *y);
 void lintm0(lint *a, lint *b) {
-	if (a->len == 1 && a->v[0] == 1) {
-		lintcopy(a, b);
-		return;
-	}
 	int i = a->len + b->len, j;
 	lintnewstatic(c); lintchecksize(c, i);
 	long long temp, temp2, base = lintbase;
@@ -206,11 +207,15 @@ void lintm1(lint *x, lint *y) {
 	if (y->len == 1 && y->v[0] == 1) {
 		return;
 	}
-	if (x->len == 0 && y->len == 0) {
+	if (x->len == 1 && x->v[0] == 1) {
+		lintcopy(x, y);
+		return;
+	}
+	if (x->len == 0 || y->len == 0) {
 		lintresetv(x);
 		return;
 	}
-	if (x->len <= 128 && y->len <= 128) {
+	if (x->len <= 256 && y->len <= 256) {
 		lintm0(x, y); return;
 	}
 	if (x->len >= lintm2minl && y->len >= lintm2minl)
@@ -273,14 +278,6 @@ void lintm2_FFT(comp*a, const int fla, int *rev, int size) {
 	return;
 }
 void lintm2(lint *x, lint *y) {
-	if (x->len == 1 && x->v[0] == 1) {
-		lintcopy(x, y);
-		return;
-	}
-	if (x->len == 0 || y->len == 0) {
-		lintresetv(x);
-		return;
-	}
 	int i, j, temp, *rev = NULL, size = 0;
 	i = x->len; if (i < y->len)i = y->len;
 	lintm2_rev(&rev, &size, i * 16);
