@@ -153,7 +153,7 @@ void lints(lint *a, int num, int section = 0) {
 	return;
 }
 //lint_muti
-#define lintm2minl 4096
+#define lintm2minl 1024
 #define lintm2maxl 2097152
 void lintm2(lint *x, lint *y);
 void lintm0(lint *a, lint *b) {
@@ -223,6 +223,7 @@ void lintm1(lint *x, lint *y) {
 			lintm2(x, y); return;
 		}
 	int n = x->len; if (n < y->len)n = y->len; n = n / 2;
+	//int m = 1; while (m < n)m *= 2; n = m;//令后半段的长度是2的幂 并且超过最大长度的一半
 	lint *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL, *f = NULL;
 	lintnew(&a); lintnew(&b); lintnew(&c); lintnew(&d); lintnew(&e); lintnew(&f);
 	lintm1divmain(x, y, a, b, c, d, e, f, n);
@@ -279,8 +280,8 @@ void lintm2_FFT(comp*a, const int fla, int *rev, int size) {
 }
 void lintm2(lint *x, lint *y) {
 	int i, j, temp, *rev = NULL, size = 0;
-	i = x->len; if (i < y->len)i = y->len;
-	lintm2_rev(&rev, &size, i * 16);
+	i = x->len + y->len;
+	lintm2_rev(&rev, &size, i * 8);
 	//a,b传值
 	comp*a = NULL;
 	while (a == NULL)a = new comp[size];
@@ -314,7 +315,7 @@ void lintm2(lint *x, lint *y) {
 	//x 传值
 	long long temp2; int tempf = 0, lenxold = x->len, count = 0;
 	lintresetv(x);
-	lintchecksize(x, size / 8 + 32);
+	lintchecksize(x, size / 8);
 	for (i = 0; i < size; i++) {
 		temp2 = (int)(a[i].x + 0.49);
 		if (temp2 > 0)count = i;
