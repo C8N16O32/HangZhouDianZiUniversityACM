@@ -1,23 +1,26 @@
 //素数&素数因子
 struct pri { int*prik = NULL, *priflag = NULL, *priv = NULL, prisize = 0; };
-void priset(pri*a,int prisize) {
+void priset(pri*a, int prisize) {
+	//开辟筛查表
 	a->priflag = new int[prisize];
-	int i = 0, j = 0, k = 1, I = 0;
+	int i = 0, j = 0, k = 1;
 	for (i = 0; i < prisize; i++)a->priflag[i] = 0;
-	i = 1; while (i*i < prisize&&i*i>0)i++; I = i;
-	for (i = 2; i < I; i++)
+	//特殊筛质数
+	for (i = 2; i < prisize; i++)
 		if (!a->priflag[i]) {
-			for (j = i * 2; j < prisize; j += i)
+			for (j = i * 1; j < prisize; j += i)
 				a->priflag[j] = k;
 			k++;
 		}
+	//检查质数个数
 	j = 0;
-	for (i = 2; i < prisize; i++)if (a->priflag[i] == 0)j++;
+	for (i = 2; i < prisize; i++)if (j < a->priflag[i])j = a->priflag[i];
+	//质数表
 	a->prik = new int[j];
-	i = 0; j = 2;
-	while (j < prisize) { if (a->priflag[j] == 0) { a->prik[i] = j; i++; }j++; }
-	prisize = i;
-
+	i = 2; j = 0; k = 0;
+	for (i = 2; i < prisize; i++)if (j < a->priflag[i]) { j = a->priflag[i]; a->prik[k] = i; k++; }
+	prisize = k;
+	//质因数表
 	a->priv = new int[prisize];
 	for (i = 0; i < prisize; i++)
 		a->priv[i] = 0;
@@ -41,68 +44,33 @@ void pridelete(pri*a) {
 void prif1(pri *a, int num, int mode = 1) {
 	if (num <= 1)return;
 	int priord = 0;
-	//合数
+	//分解质因数
 	while (a->priflag[num]) {
 		priord = a->priflag[num] - 1;
 		a->priv[priord] += mode;
 		num /= a->prik[priord];
 	}
-	//现在数据是质数
-	if (num == a->prik[priord]) { a->priv[priord] += mode; return; }
-	int low = 0, high = a->prisize - 1;
-	if (num < a->prik[priord])high = priord - 1;
-	while (low <= high) {
-		priord = (low + high) / 2;
-		if (a->prik[priord] == num)break;
-		if (a->prik[priord] > num)
-			high = priord - 1;
-		else
-			low = priord + 1;
-	}
-	a->priv[priord] += mode;
 	return;
 }
 //分解质因数-阶乘
 void priffact(pri *a, int num, int mode = 1) {
-	if (num <= 1)return;
-	int nummax = num, nums = 2;
-	int priord, low, high;
-	for (nums = 2; nums <= nummax; nums++) {
-		num = nums;
-		priord = 0;
-		//合数
-		while (a->priflag[num]) {
-			priord = a->priflag[num] - 1;
-			a->priv[priord] += mode;
-			num /= a->prik[priord];
-		}
-		//现在数据是质数
-		if (num == a->prik[priord]) { a->priv[priord] += mode; continue; }
-		low = 0; high = a->prisize - 1;
-		if (num < a->prik[priord])high = priord - 1;
-		while (low <= high) {
-			priord = (low + high) / 2;
-			if (a->prik[priord] == num)break;
-			if (a->prik[priord] > num)
-				high = priord - 1;
-			else
-				low = priord + 1;
-		}
-		a->priv[priord] += mode;
-	}
+	int i;
+	for (i = 2; i <= num; i++)
+		prif1(a, i, 1);
 	return;
 }
 //分解质因数-排列数
 void prifcnm(pri *a, int n, int m) {
 	if (n - m < m)m = n - m; int i;
-	privreset(a);
 	//re=n!/(n-m)!
-	priffact(a, n, 1);
-	priffact(a, n - m, -1);
+	for (i = n - m + 1; i <= n; i++)
+		prif1(a, i, 1);
 	//re=re/m!
-	priffact(a, m, -1);
+	for (i = 1; i <= m; i++)
+		prif1(a, i, -1);
+	return;
 }
-//分解质因数表导出为大数
+//质因数表导出为大数
 void pri2lint(pri *a, lint *b) {
 	int i, k, ti, tb, tk = 2, tmin = 16;
 	lint *base = NULL, *temp[32] = { NULL };
@@ -137,8 +105,8 @@ void pri2lint(pri *a, lint *b) {
 		}
 	for (i = 0; i < 32; i++)lintm(b, temp[i]);
 	//末尾的0
-	if (TI) { 
-		lintchecksize(b, b->len + TI); 
+	if (TI) {
+		lintchecksize(b, b->len + TI);
 		for (i = b->len + TI - 1; i >= TI; i--)b->v[i] = b->v[i - TI];
 		for (i = 0; i < TI; i++)b->v[i] = 0;
 		b->len += TI;
