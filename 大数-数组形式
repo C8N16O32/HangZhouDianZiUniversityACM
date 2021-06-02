@@ -34,6 +34,11 @@ void lintdelete(lint **ap) {
 	*ap = NULL;
 	return;
 }
+void lintshift(lint *a, int n) {
+	lintchecksize(a, a->len + n);
+	for (int i = a->len - 1; i >= 0; i--) { a->v[i + n] = a->v[i]; a->v[i] = 0; }
+	a->len += n; return;
+}
 void lintcopy(lint *a, lint *b) {
 	lintchecksize(a, b->len);
 	lintresetv(a);
@@ -92,14 +97,15 @@ void lintsprintf(lint *a, char* temp0, int tempsize = -1) {
 }
 //lint_add
 void linta(lint *a, lint *b) {
-	int i = a->len, n = b->len, temp = 0, base = lintbase;
-	if (i < n)i = n; lintchecksize(a, i + 1);
-	i = 0; while (i < n&&b->v[i] == 0)i++;
+	int i = a->len, n = b->len; if (i < n)i = n;
+	lintchecksize(a, i + 1);
+	int temp = 0, base = lintbase;
+	i = 0; while (i < b->len&&b->v[i] == 0)i++;
 	while (1) {
-		if (i < n)temp += b->v[i]; if (i >= n&&temp == 0)break;
+		if (i < b->len)temp += b->v[i];
+		else if (temp == 0)break;
 		temp += a->v[i];
-		a->v[i] = temp%base; temp /= base;
-		i++;
+		a->v[i] = temp%base; temp /= base; i++;
 	}
 	if (a->len < i)a->len = i;
 	return;
@@ -110,37 +116,34 @@ void linta(lint *a, int num, int section = 0) {
 	linta(a, b);
 	return;
 }
-int lintafast(lint *a, long long num, int section = 0, int section2 = 0) {
+int lintafast(lint *a, long long num, int sect = 0, int sect2 = 0) {
 	if (num <= 0)return num;
-	int i, base = lintbase, base2 = 1; for (i = 0; i < section2; i++)base2 *= 10; base = lintbase / base2;
-	long long temp0 = 0, temp1 = 0, temp2 = 0, temp3 = 0;
-	temp0 = num%base*base2;
-	if (num) { num /= base; temp1 = num %lintbase; }
-	if (num) { num /= lintbase; temp2 = num%lintbase; }
-	if (num) { num /= lintbase; temp3 = num; }
+	int i, base = lintbase, base2 = 1; for (i = 0; i < sect2; i++)base2 *= 10; base = lintbase / base2;
+	int temp[4] = { 0 };
+	temp[0] = num%base*base2; num /= base;
+	i = 1; while (num) { temp[i] = num%lintbase; num /= lintbase; i++; }
 
-	int s0 = section;
-	i = section; if (i >= a->size)return i;
-	a->v[section] += temp0; if (a->v[section] >= lintbase) { temp1 += a->v[section] / lintbase; a->v[section] %= lintbase; }section++;
-	if (temp1) { i = section; if (i >= a->size)return i; a->v[section] += temp1; if (a->v[section] >= lintbase) { temp2 += a->v[section] / lintbase; a->v[section] %= lintbase; } }section++;
-	if (temp2) { i = section; if (i >= a->size)return i; a->v[section] += temp2; if (a->v[section] >= lintbase) { temp3 += a->v[section] / lintbase; a->v[section] %= lintbase; } }section++;
-	if (temp3) { i = section; if (i >= a->size)return i; a->v[section] += temp3; }
-	while (section < a->size&&a->v[section] >= lintbase) {
-		a->v[section + 1] += a->v[section] / lintbase; a->v[section] %= lintbase;
-		section += 1; i = section; if (i >= a->size)return i;
+	i = 0;
+	while (1) {
+		if (sect + i >= a->size)return sect + i;
+		if (i < 4)a->v[sect + i] += temp[i];
+		if (a->v[sect + i] >= lintbase) { temp[i + 1] += a->v[sect + i] / lintbase; a->v[sect + i] %= lintbase; }
+		else if (i >= 4) return sect + i;
+		i++;
 	}
-	return i;
 }
 //lint_sub
 void lints(lint *a, lint *b) {
 	//不支持负数
 	int i, n = a->len, temp = 0, base = lintbase;
-	for (i = 0; i < n; i++) {
-		if (i < b->len&&b->v[i] == 0 && temp == 0)continue;
-		temp += a->v[i];
+	i = 0; while (i < b->len&&b->v[i] == 0)i++;
+	while (1) {
 		if (i < b->len)temp -= b->v[i];
-		if (temp >= 0) { a->v[i] = temp; temp = 0; if (i >= b->len)break; }
+		else if (temp == 0)break;
+		temp += a->v[i];
+		if (temp >= 0) { a->v[i] = temp; temp = 0; }
 		else { a->v[i] = temp + base; temp = -1; }
+		i++;
 	}
 	for (i = a->len - 1; i >= 0; i--)if (a->v[i] != 0)break; a->len = i + 1;
 	lintchecksize(a, a->len);
@@ -157,18 +160,28 @@ void lints(lint *a, int num, int section = 0) {
 #define lintm2maxl 2097152
 void lintm2(lint *x, lint *y);
 void lintm0(lint *a, lint *b) {
-	int i = a->len + b->len, j;
-	lintnewstatic(c); lintchecksize(c, i);
-	long long temp, temp2, base = lintbase;
-	temp = 0;
+	if (b->len == 1 && b->v[0] == 1) {
+		return;
+	}
+	if (a->len == 1 && a->v[0] == 1) {
+		lintcopy(a, b);
+		return;
+	}
+	if (a->len == 0 || b->len == 0) {
+		lintresetv(a);
+		return;
+	}
+	lintnewstatic(c); lintchecksize(c, a->len + b->len);
+	int i, j; long long temp = 0, temp2, base = lintbase;
 	for (i = 0; i < a->len + b->len; i++) {
 		for (j = 0; j <= i; j++) {
 			temp2 = 1;
 			if (j < a->len)temp2 *= a->v[j]; else continue;
 			if (i - j < b->len)temp2 *= b->v[i - j]; else continue;
 			temp += temp2;
+			if (j % 400 == 399) { lintafast(c, temp / base, i + 1); temp %= base; }
 		}
-		c->v[i] = temp%base; temp /= base;
+		lintafast(c, temp%base, i); temp /= base;
 	}
 	i = c->size - 1; while (c->v[i] == 0)i--; c->len = i + 1;
 	lintcopy(a, c);
@@ -187,15 +200,11 @@ void lintm1sum(lint *q, lint *p, lint *k, int n) {
 	lint *re = NULL; lintnew(&re); int i;
 	if (k->len) {
 		lints(k, q); lints(k, p);
-		lintchecksize(k, k->len + n);
-		for (i = k->len - 1; i >= 0; i--) { k->v[i + n] = k->v[i]; k->v[i] = 0; }
-		k->len += n;
+		lintshift(k, n);
 		linta(re, k);
 	}
 	if (q->len) {
-		lintchecksize(q, q->len + n * 2);
-		for (i = q->len - 1; i >= 0; i--) { q->v[i + n * 2] = q->v[i]; q->v[i] = 0; }
-		q->len += n * 2;
+		lintshift(q, n * 2);
 		linta(re, q);
 	}
 	linta(re, p);
