@@ -2,6 +2,7 @@
 struct pri { int*prik = NULL, *priflag = NULL, *priv = NULL, prisize = 0; };
 void priset(pri*a, int prisize) {
 	//开辟筛查表
+	if (prisize < 3)prisize = 3;
 	a->priflag = new int[prisize];
 	int i = 0, j = 0, k = 1;
 	for (i = 0; i < prisize; i++)a->priflag[i] = 0;
@@ -45,7 +46,7 @@ void prif1(pri *a, int num, int mode = 1) {
 	if (num <= 1)return;
 	int priord = 0;
 	//分解质因数
-	while (a->priflag[num]) {
+	while (num > 1) {
 		priord = a->priflag[num] - 1;
 		a->priv[priord] += mode;
 		num /= a->prik[priord];
@@ -54,8 +55,7 @@ void prif1(pri *a, int num, int mode = 1) {
 }
 //分解质因数-阶乘
 void priffact(pri *a, int num, int mode = 1) {
-	int i;
-	for (i = 2; i <= num; i++)
+	for (int i = 2; i <= num; i++)
 		prif1(a, i, 1);
 	return;
 }
@@ -71,47 +71,44 @@ void prifcnm(pri *a, int n, int m) {
 	return;
 }
 //质因数表导出为大数
-void pri2lint(pri *a, lint *b) {
-	int i, k, ti, tb, tk = 2, tmin = 16;
-	lint *base = NULL, *temp[32] = { NULL };
-	lintnew(&base);
-	for (i = 0; i < 32; i++) { lintnew(temp + i); linta(temp[i], 1); }
-
-	int TI = 0;
-	if (a->priv[0]>0 && a->priv[2]>0) {//末尾的0
-		ti = a->priv[2]; if (ti > a->priv[0])ti = a->priv[0];
-		ti = ti / 8; a->priv[0] -= ti * 8; a->priv[2] -= ti * 8;
-		TI = ti;
-	}
+void pri2lintms(pri*a, lint**temp, int size = 32, int minlen = 16) {
+	lint *base = NULL; lintnew(&base);
+	int i, k, ti, tb, tk = 2, tmin = minlen;
 	for (i = 0; i < a->prisize; i++)
 		if (a->priv[i]) {
 			k = a->priv[i];
 			lintresetv(base); linta(base, 1); lintm(base, a->prik[i]);
 			while (k) {
 				if (k % 2) {
-					ti = 0; tb = tmin;
-					while (base->len > tb) { tb *= tk; ti++; }
-					lintm(temp[ti], base);
-					while (temp[ti]->len >= tb) {
-						lintm(temp[ti + 1], temp[ti]);
-						lintresetv(temp[ti]); linta(temp[ti], 1);
-						tb *= tk; ti++;
-					}
+					lintms(temp, base);
 				}
 				if (k == 1)break;
 				lintm(base, base);
 				k = k / 2;
 			}
 		}
-	for (i = 0; i < 32; i++)lintm(b, temp[i]);
-	//末尾的0
-	if (TI) {
-		lintchecksize(b, b->len + TI);
-		for (i = b->len + TI - 1; i >= TI; i--)b->v[i] = b->v[i - TI];
-		for (i = 0; i < TI; i++)b->v[i] = 0;
-		b->len += TI;
-	}
 	lintdelete(&base);
-	for (i = 0; i < 32; i++)lintdelete(temp + i);
 	return;
 }
+void pri2lint(pri *a, lint *b) {
+	lint **temp = NULL; lintmsnew(&temp);
+	int TI = 0;
+	if (a->prisize>=3 && a->priv[0]>0 && a->priv[2]>0) {//末尾的0
+		TI = a->priv[2]; if (TI > a->priv[0])TI = a->priv[0];
+		TI = TI / 8; a->priv[0] -= TI * 8; a->priv[2] -= TI * 8;
+	}
+	pri2lintms(a, temp);
+	lintms2lint(temp, b);
+	//末尾的0
+	if (TI) lintshift(b, TI);
+	lintmsdelete(&temp);
+	return;
+}
+//取出质因数表的一部分
+void priexport(pri*a, int *prik, int*priv, int start, int endplus1) {
+	if (endplus1 > a->prisize)endplus1 = a->prisize;
+	int size = endplus1 - start;
+	delete[]prik; prik = new int[size]; delete[]priv; priv = new int[size];
+	for (int i = start; i < endplus1; i++) { prik[i] = a->prik[i]; priv[i] = a->priv[i]; }
+	return;
+};
