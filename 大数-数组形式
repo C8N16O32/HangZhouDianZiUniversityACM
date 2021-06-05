@@ -1,5 +1,9 @@
 //C大数类
-struct lint { int len = 0; int size = 0; int* v = NULL; };//length、size、value
+struct lint {
+	int len = 0;
+	int size = 0;
+	int* v = NULL;
+};//length、size、value
 #define lintminl 64
 #define lintbase 100000000
 #define lintchecksize(a, tsize) if ( (tsize) > (a)->size ||(tsize) >= lintminl && (tsize) * 2 <= (a)->size )lintresetsize(a, tsize)
@@ -12,7 +16,7 @@ void lintresetsize(lint *a, int size) {
 	delete[]a->v; a->v = vtemp; a->size = sizenew; vtemp = NULL; return;
 }
 void lintresetv(lint *a) {
-	int i; for (i = 0; i < a->len; i++)a->v[i] = 0; a->len = 0;
+	for (int i = 0; i < a->len; i++)a->v[i] = 0; a->len = 0;
 	return;
 }
 void lintnew(lint*a) {
@@ -22,7 +26,7 @@ void lintnew(lint*a) {
 	lintresetv(a); return;
 }
 void lintnew(lint **ap) {
-	*ap = NULL; *ap = new lint;
+	*ap = new lint;
 	lintnew(*ap); return;
 }
 void lintdelete(lint *a) {
@@ -40,8 +44,7 @@ void lintshift(lint *a, int n) {
 	a->len += n; return;
 }
 void lintcopy(lint *a, lint *b) {
-	lintchecksize(a, b->len);
-	lintresetv(a);
+	lintchecksize(a, b->len); lintresetv(a);
 	int i; for (i = 0; i < b->len; i++) a->v[i] = b->v[i]; a->len = b->len;
 	return;
 }
@@ -125,10 +128,10 @@ int lintafast(lint *a, long long num, int sect = 0, int sect2 = 0) {
 
 	i = 0;
 	while (1) {
-		if (sect + i >= a->size)return sect + i;
+		if (sect + i >= a->size)return a->len = sect + i;
 		if (i < 4)a->v[sect + i] += temp[i];
 		if (a->v[sect + i] >= lintbase) { temp[i + 1] += a->v[sect + i] / lintbase; a->v[sect + i] %= lintbase; }
-		else if (i >= 4) return sect + i;
+		else if (i >= 4) return a->len = sect + i;
 		i++;
 	}
 }
@@ -187,6 +190,7 @@ void lintm0(lint *a, lint *b) {
 	lintcopy(a, c);
 	return;
 }
+//分治乘法
 void lintm1div(lint *d, lint *s, int end, int start) {
 	if (end > s->len)end = s->len;
 	if (end <= start)return;
@@ -224,15 +228,14 @@ void lintm1(lint *x, lint *y) {
 		lintresetv(x);
 		return;
 	}
-	if (x->len <= 256 && y->len <= 256) {
-		lintm0(x, y); return;
-	}
 	if (x->len >= lintm2minl && y->len >= lintm2minl)
 		if (x->len < lintm2maxl && y->len < lintm2maxl) {
 			lintm2(x, y); return;
 		}
+	if (x->len <= 256 && y->len <= 256) {
+		lintm0(x, y); return;
+	}
 	int n = x->len; if (n < y->len)n = y->len; n = n / 2;
-	//int m = 1; while (m < n)m *= 2; n = m;//令后半段的长度是2的幂 并且超过最大长度的一半
 	lint *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL, *f = NULL;
 	lintnew(&a); lintnew(&b); lintnew(&c); lintnew(&d); lintnew(&e); lintnew(&f);
 	lintm1divmain(x, y, a, b, c, d, e, f, n);
@@ -242,6 +245,7 @@ void lintm1(lint *x, lint *y) {
 	lintdelete(&a); lintdelete(&b); lintdelete(&c); lintdelete(&d); lintdelete(&e); lintdelete(&f);
 	return;
 }
+//FFT乘法
 struct comp { double x, y; };
 const double pi = acos(-1);
 void coswap(comp *a, comp *b) {
@@ -288,6 +292,17 @@ void lintm2_FFT(comp*a, const int fla, int *rev, int size) {
 	return;
 }
 void lintm2(lint *x, lint *y) {
+	if (y->len == 1 && y->v[0] == 1) {
+		return;
+	}
+	if (x->len == 1 && x->v[0] == 1) {
+		lintcopy(x, y);
+		return;
+	}
+	if (x->len == 0 || y->len == 0) {
+		lintresetv(x);
+		return;
+	}
 	int i, j, temp, *rev = NULL, size = 0;
 	i = x->len + y->len;
 	lintm2_rev(&rev, &size, i * 8);
@@ -382,4 +397,61 @@ void lintd(lint *a, int num, int section = 0) {
 	lintnewstatic(c); lintchecksize(c, a->len);
 	linta(c, num, section);
 	lintd(a, c); return;
+}
+//二分乘法
+void lintmsnew(lint**temp, int size = 32) {
+	for (int i = 0; i < size; i++) { lintnew(temp + i); linta(temp[i], 1); }return;
+}
+void lintmsnew(lint***ptemp, int size = 32) {
+	*ptemp = new lint*[size];
+	lintmsnew(*ptemp, size); return;
+}
+void lintmsdelete(lint***ptemp, int size = 32) {
+	for (int i = 0; i < size; i++)lintdelete(*ptemp + i);
+	delete[] * ptemp; *ptemp = NULL; return;
+}
+void lintmsresetv(lint**temp, int size = 32) {
+	for (int i = 0; i < size; i++) { lintresetv(temp[i]); lintchecksize(temp[i], 0); lintafast(temp[i], 1); }return;
+}
+void lintms(lint**temp, int n, int section = 0, int size = 32, int minlen = 16) {
+	lintm(temp[0], n, section);
+	int ti = 0; int tb = minlen;
+	while (temp[ti]->len >= tb) {
+		lintm(temp[ti + 1], temp[ti]);
+		lintresetv(temp[ti]); linta(temp[ti], 1);
+		tb *= 2; ti++;
+	}
+	return;
+}
+void lintms(lint**temp, lint *a, int size = 32, int minlen = 16) {
+	int ti = 0; int tb = minlen;
+	while (a->len >= tb) {
+		tb *= 2; ti++;
+	}
+	lintm(temp[0], a);
+	while (temp[ti]->len >= tb) {
+		lintm(temp[ti + 1], temp[ti]);
+		lintresetv(temp[ti]); linta(temp[ti], 1);
+		tb *= 2; ti++;
+	}
+	return;
+}
+void lintms(lint**temp, lint**temp2, int size = 32, int minlen = 16) {
+	int i, b, ti, tb;
+	for (i = 0; i < size; i++) {
+		ti = 0; tb = minlen;
+		while (temp2[ti]->len >= tb) {
+			tb *= 2; ti++;
+		}
+		lintm(temp[ti], temp2[i]);
+		while (temp[ti]->len >= tb) {
+			lintm(temp[ti + 1], temp[ti]);
+			lintresetv(temp[ti]); linta(temp[ti], 1);
+			tb *= 2; ti++;
+		}
+	}
+	return;
+}
+void lintms2lint(lint**temp, lint *a, int size = 32) {
+	for (int i = 0; i < 32; i++)lintm(a, temp[i]); return;
 }
