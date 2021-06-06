@@ -175,8 +175,10 @@ void lintm0(lint *a, lint *b) {
 		return;
 	}
 	lintnewstatic(c); lintchecksize(c, a->len + b->len);
-	int i, j; long long temp = 0, temp2, base = lintbase;
-	for (i = 0; i < a->len + b->len; i++) {
+	int i, j, I; long long temp = 0, temp2, base = lintbase;
+	i = 0; while (i < a->len&&a->v[i] == 0)i++;
+	j = 0; while (j < b->len&&b->v[j] == 0)j++; I = i + j;
+	for (i = I; i < a->len + b->len; i++) {
 		for (j = 0; j <= i; j++) {
 			temp2 = 1;
 			if (j < a->len)temp2 *= a->v[j]; else continue;
@@ -398,59 +400,48 @@ void lintd(lint *a, int num, int section = 0) {
 	lintd(a, c); return;
 }
 //二分乘法
-void lintmsnew(lint**temp, int size = 32) {
-	for (int i = 0; i < size; i++) { lintnew(temp + i); linta(temp[i], 1); }return;
+#define lintmslen 24
+#define lintmsminl 16
+void lintmsnew(lint**temp) {
+	for (int i = 0; i < lintmslen; i++) { lintnew(temp + i); linta(temp[i], 1); }return;
 }
-void lintmsnew(lint***ptemp, int size = 32) {
-	*ptemp = new lint*[size];
-	lintmsnew(*ptemp, size); return;
+void lintmsnew(lint***ptemp) {
+	*ptemp = new lint*[lintmslen];
+	lintmsnew(*ptemp); return;
 }
-void lintmsdelete(lint***ptemp, int size = 32) {
-	for (int i = 0; i < size; i++)lintdelete(*ptemp + i);
+void lintmsdelete(lint***ptemp) {
+	for (int i = 0; i < lintmslen; i++)lintdelete(*ptemp + i);
 	delete[] * ptemp; *ptemp = NULL; return;
 }
-void lintmsresetv(lint**temp, int size = 32) {
-	for (int i = 0; i < size; i++) { lintresetv(temp[i]); linta(temp[i], 1); }return;
+void lintmsresetv(lint**temp) {
+	for (int i = 0; i < lintmslen; i++) { lintresetv(temp[i]); temp[i]->v[0] = 1; temp[i]->len = 1; }return;
 }
-void lintms(lint**temp, int n, int section = 0, int size = 32, int minlen = 16) {
-	int ti = 0; int tb = minlen;
+void lintms(lint**temp, int n, int section = 0) {
+	int ti = 0; int tb = lintmsminl;
 	lintm(temp[0], n, section);
 	while (temp[ti]->len >= tb) {
 		lintm(temp[ti + 1], temp[ti]);
-		lintresetv(temp[ti]); linta(temp[ti], 1);
+		lintresetv(temp[ti]); temp[ti]->v[0] = 1; temp[ti]->len = 1;
 		tb *= 2; ti++;
 	}
 	return;
 }
-void lintms(lint**temp, lint *a, int size = 32, int minlen = 16) {
-	int ti = 0; int tb = minlen;
-	while (a->len >= tb) {
+void lintms(lint**temp, lint *a) {
+	int ti = 0; int tb = lintmsminl;
+	while (ti<lintmslen&&a->len >= tb) {
 		tb *= 2; ti++;
 	}
 	lintm(temp[0], a);
 	while (temp[ti]->len >= tb) {
 		lintm(temp[ti + 1], temp[ti]);
-		lintresetv(temp[ti]); linta(temp[ti], 1);
+		lintresetv(temp[ti]); temp[ti]->v[0] = 1; temp[ti]->len = 1;
 		tb *= 2; ti++;
 	}
 	return;
 }
-void lintms(lint**temp, lint**temp2, int size = 32, int minlen = 16) {
-	int i, ti, tb;
-	for (i = 0; i < size; i++) {
-		ti = 0; tb = minlen;
-		while (temp2[ti]->len >= tb) {
-			tb *= 2; ti++;
-		}
-		lintm(temp[ti], temp2[i]);
-		while (temp[ti]->len >= tb) {
-			lintm(temp[ti + 1], temp[ti]);
-			lintresetv(temp[ti]); linta(temp[ti], 1);
-			tb *= 2; ti++;
-		}
-	}
-	return;
+void lintms(lint**temp, lint**temp2) {
+	for (int i = 0; i < lintmslen; i++)lintms(temp, temp2[i]); return;
 }
-void lintms2lint(lint**temp, lint *a, int size = 32) {
-	for (int i = 0; i < 32; i++)lintm(a, temp[i]); return;
+void lintms2lint(lint**temp, lint *a) {
+	for (int i = 0; i < lintmslen; i++)lintm(a, temp[i]); return;
 }
