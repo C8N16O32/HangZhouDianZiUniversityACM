@@ -44,7 +44,7 @@ void lintshift(lint *a, int n) {
 	a->len += n; return;
 }
 void lintcopy(lint *a, lint *b) {
-	lintchecksize(a, b->len); lintresetv(a);
+	lintresetv(a); lintchecksize(a, b->len);
 	int i; for (i = 0; i < b->len; i++) a->v[i] = b->v[i]; a->len = b->len;
 	return;
 }
@@ -171,7 +171,7 @@ void lintm0(lint *a, lint *b) {
 		return;
 	}
 	if (a->len == 0 || b->len == 0) {
-		lintresetv(a);
+		lintresetv(a); lintchecksize(a, 0);
 		return;
 	}
 	lintnewstatic(c); lintchecksize(c, a->len + b->len);
@@ -225,7 +225,7 @@ void lintm1(lint *x, lint *y) {
 		return;
 	}
 	if (x->len == 0 || y->len == 0) {
-		lintresetv(x);
+		lintresetv(x); lintchecksize(x, 0);
 		return;
 	}
 	if (x->len >= lintm2minl && y->len >= lintm2minl)
@@ -300,7 +300,7 @@ void lintm2(lint *x, lint *y) {
 		return;
 	}
 	if (x->len == 0 || y->len == 0) {
-		lintresetv(x);
+		lintresetv(x); lintchecksize(x, 0);
 		return;
 	}
 	int i, j, temp, *rev = NULL, size = 0;
