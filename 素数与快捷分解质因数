@@ -105,10 +105,10 @@ void pri2lint(pri *a, lint *b) {
 	return;
 }
 //取出质因数表的一部分
-void priexport(pri*a, int *prik, int*priv, int start, int endplus1) {
-	if (endplus1 > a->prisize)endplus1 = a->prisize;
-	int size = endplus1 - start;
+void priexport(pri*a, int *prik, int*priv, int start, int *endplus1) {
+	if (*endplus1 > a->prisize)*endplus1 = a->prisize;
+	int size = *endplus1 - start;
 	delete[]prik; prik = new int[size]; delete[]priv; priv = new int[size];
-	for (int i = start; i < endplus1; i++) { prik[i] = a->prik[i]; priv[i] = a->priv[i]; }
+	for (int i = start; i < *endplus1; i++) { prik[i] = a->prik[i]; priv[i] = a->priv[i]; }
 	return;
 };
