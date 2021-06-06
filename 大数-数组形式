@@ -431,7 +431,7 @@ void lintms(lint**temp, lint *a) {
 	while (ti<lintmslen&&a->len >= tb) {
 		tb *= 2; ti++;
 	}
-	lintm(temp[0], a);
+	lintm(temp[ti], a);
 	while (temp[ti]->len >= tb) {
 		lintm(temp[ti + 1], temp[ti]);
 		lintresetv(temp[ti]); temp[ti]->v[0] = 1; temp[ti]->len = 1;
