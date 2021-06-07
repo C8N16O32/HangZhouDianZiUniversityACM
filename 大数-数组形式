@@ -214,7 +214,7 @@ void lintm1div(lint *d, lint *s, int end, int start) {
 }
 #define lintm1divmain(x, y, a, b, c, d, e, f, n) lintm1div(a, x, x->len, n); lintm1div(b, x, n, 0); lintm1div(c, y, y->len, n); lintm1div(d, y, n, 0); lintcopy(e, a); linta(e, b); lintcopy(f, c); linta(f, d)
 void lintm1sum(lint *q, lint *p, lint *k, int n) {
-	lint *re = NULL; lintnew(&re); int i;
+	lint *re = NULL; lintnew(&re);
 	if (k->len) {
 		lints(k, q); lints(k, p);
 		lintshift(k, n);
