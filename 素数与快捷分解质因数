@@ -73,7 +73,7 @@ void prifcnm(pri *a, int n, int m) {
 //质因数表导出为大数
 void pri2lintms(pri*a, lint**temp) {
 	lint *base = NULL; lintnew(&base);
-	int i, k, ti, tb, tk = 2, tmin = lintmsminl;
+	int i, k;
 	for (i = 0; i < a->prisize; i++)
 		if (a->priv[i]) {
 			k = a->priv[i];
