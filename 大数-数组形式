@@ -1,6 +1,6 @@
 //C大数类
 struct lint { int len = 0; int size = 0; int* v = NULL; };//length、size、value
-#define lintminl 16
+#define lintminl 64
 #define lintbase 100000000
 #define lintchecksize(a, tsize) if ( (tsize) > (a)->size ||(tsize) >= lintminl && (tsize) * 2 <= (a)->size )lintresetsize(a, tsize)
 #define lintnewstatic(a) static lint *a = NULL; if (a != NULL)lintresetv(a); else lintnew(&a)
@@ -414,7 +414,7 @@ void lintd(lint *a, int num, int section = 0) {
 }
 //二分乘法
 #define lintmslen 32
-#define lintmsminl 4
+#define lintmsminl 16
 void lintmsnew(lint**temp) {
 	for (int i = 0; i < lintmslen; i++) { lintnew(temp + i); linta(temp[i], 1); }return;
 }
