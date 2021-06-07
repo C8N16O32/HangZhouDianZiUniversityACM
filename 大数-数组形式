@@ -252,7 +252,9 @@ void lintm1(lint *x, lint *y) {
 	lint *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL, *f = NULL;
 	lintnew(&a); lintnew(&b); lintnew(&c); lintnew(&d); lintnew(&e); lintnew(&f);
 	lintm1divmain(x, y, a, b, c, d, e, f, n);
-	lintm1(a, c); lintm1(b, d); lintm1(e, f);
+	lintm1(a, c); lintdelete(&c); 
+	lintm1(b, d); lintdelete(&d);
+	lintm1(e, f); lintdelete(&f);
 	lintm1sum(a, b, e, n);
 	lintcopy(x, a);
 	lintdelete(&a); lintdelete(&b); lintdelete(&c); lintdelete(&d); lintdelete(&e); lintdelete(&f);
