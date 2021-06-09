@@ -1,0 +1,46 @@
+#include "stdio.h"
+#include "math.h"
+#include "time.h"//如果要保留计算时间的功能
+
+//“C8N16O32/HangZhouDianZiUniversityACM/大数-数组形式”	的全部内容
+//“C8N16O32/HangZhouDianZiUniversityACM/素数与快捷分解质因数”	的全部内容
+
+int calfactdig(int s,int eplus1) {
+	double dig = 0;
+	for (int i = s; i < eplus1; i++)dig += log10(1.0*i);
+	return (int)(floor(dig + 0.00001) + 1);
+}
+
+int main() {
+	time_t s, e1, e;
+	lint *a = NULL; lintnew(&a); linta(a, 1);
+	pri *p = NULL;
+	int n = 1;
+	while (1) {
+		scanf("%d", &n);
+		s = clock();
+		if (n < 1)n = 1;
+
+		switch (1)
+		{
+		case 1://计算n!
+		prinewandset(&p, n + 1);
+		priffact(p, n, 1); break;
+		case 2://计算2^n
+		prinewandset(p, 3);
+		prif1(p, 2, n); break;
+		default:
+			break;
+		}
+
+		pri2lint(p, a);
+		e1 = clock();
+		lintprintf(a);
+		printf("使用log计算n!的位数:%d\n", calfactdig(1, n + 1));//阶乘的位数
+		lintresetv(a); linta(a, 1);
+		pridelete(p);
+		e = clock(); printf("%dms | %dms(+%d)\n", (int)(e1 - s), (int)(e - s), (int)(e - e1));
+	}
+	lintdelete(&a);
+	return 0;
+}
