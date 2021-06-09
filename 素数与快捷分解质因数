@@ -1,8 +1,9 @@
 //素数&素数因子
 struct pri { int*prik = NULL, *priflag = NULL, *priv = NULL, prisize = 0; };
-void priset(pri*a, int prisize) {
+void prinewandset(pri*a, int prisize = 3) {
 	//开辟筛查表
 	if (prisize < 3)prisize = 3;
+	delete[]a->priflag;
 	a->priflag = new int[prisize];
 	int i = 0, j = 0, k = 1;
 	for (i = 0; i < prisize; i++)a->priflag[i] = 0;
@@ -17,22 +18,24 @@ void priset(pri*a, int prisize) {
 	j = 0;
 	for (i = 2; i < prisize; i++)if (j < a->priflag[i])j = a->priflag[i];
 	//质数表
+	delete[]a->prik;
 	a->prik = new int[j];
 	i = 2; j = 0; k = 0;
 	for (i = 2; i < prisize; i++)if (j < a->priflag[i]) { j = a->priflag[i]; a->prik[k] = i; k++; }
 	prisize = k;
 	//质因数表
+	delete[]a->priv;
 	a->priv = new int[prisize];
 	for (i = 0; i < prisize; i++)
 		a->priv[i] = 0;
 	a->prisize = prisize;
 	return;
 }
-void priset(pri**ap, int prisize) {
+void prinewandset(pri**ap, int prisize) {
 	if (*ap == NULL)*ap = new pri;
-	priset(*ap, prisize); return;
+	prinewandset(*ap, prisize); return;
 }
-void privreset(pri*a) {
+void priresetv(pri*a) {
 	int i; for (i = 0; i < a->prisize; i++)a->priv[i] = 0; return;
 }
 void pridelete(pri*a) {
@@ -41,6 +44,19 @@ void pridelete(pri*a) {
 	delete[] a->priv; a->priv = NULL;
 	a->prisize = 0; return;
 }
+void pridelete(pri**ap) {
+	pridelete(*ap);
+	delete *ap; *ap = NULL; return;
+}
+//取出质因数表的一部分
+void pricopy(pri*a, pri*b, int start, int *endplus1) {
+	if (*endplus1 > b->prisize)*endplus1 = b->prisize;
+	int size = *endplus1 - start;
+	delete[]a->prik; a->prik = new int[size]; delete[]a->priv; a->priv = new int[size]; delete[]a->priflag; a->priflag = NULL;
+	for (int i = 0; i < size; i++) { a->prik[i] = b->prik[i + start]; a->priv[i] = b->priv[i + start]; }
+	a->prisize = size;
+	return;
+};
 //分解质因数-一个数字
 void prif1(pri *a, int num, int mode = 1) {
 	if (num <= 1)return;
@@ -93,7 +109,7 @@ void pri2lintms(pri*a, lint**temp) {
 void pri2lint(pri *a, lint *b) {
 	lint **temp = NULL; lintmsnew(&temp);
 	int TI = 0;
-	if (a->prisize>=3 && a->priv[0]>0 && a->priv[2]>0) {//末尾的0
+	if (a->prisize >= 3 && a->priv[0]>0 && a->priv[2]>0) {//末尾的0
 		TI = a->priv[2]; if (TI > a->priv[0])TI = a->priv[0];
 		TI = TI / 8; a->priv[0] -= TI * 8; a->priv[2] -= TI * 8;
 	}
@@ -104,11 +120,3 @@ void pri2lint(pri *a, lint *b) {
 	lintmsdelete(&temp);
 	return;
 }
-//取出质因数表的一部分
-void priexport(pri*a, int *prik, int*priv, int start, int *endplus1) {
-	if (*endplus1 > a->prisize)*endplus1 = a->prisize;
-	int size = *endplus1 - start;
-	delete[]prik; prik = new int[size]; delete[]priv; priv = new int[size];
-	for (int i = start; i < *endplus1; i++) { prik[i] = a->prik[i]; priv[i] = a->priv[i]; }
-	return;
-};
