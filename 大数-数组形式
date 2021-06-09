@@ -263,7 +263,7 @@ void lintm1(lint *x, lint *y) {
 	lintm1(e, f); lintdelete(&f);
 	lintm1sum(a, b, e, n);
 	lintcopy(x, a);
-	lintdelete(&a); lintdelete(&b); lintdelete(&c); lintdelete(&d); lintdelete(&e); lintdelete(&f);
+	lintdelete(&a); lintdelete(&b); lintdelete(&e);
 	return;
 }
 //FFT乘法
