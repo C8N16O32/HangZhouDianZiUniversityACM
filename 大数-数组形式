@@ -136,13 +136,16 @@ void lintafast(lint *a, long long num, int sect = 0, int sect2 = 0) {
 	temp[0] = num%base*base2; num /= base;
 	i = 1; while (num) { temp[i] = num%lintbase; num /= lintbase; i++; }
 	int*v = a->v, size = a->size;//优化
-	i = 0, j = 0; while (j < 4 && temp[j] != 0)j++;
+	i = 0; j = 0; while (j < 4 && temp[j] != 0)j++;
+	base2 = 0;
 	while (sect + i < size) {
 		if (i < j)v[sect + i] += temp[i];
-		if (v[sect + i] >= lintbase) { temp[i + 1] += v[sect + i] / lintbase; v[sect + i] %= lintbase; }
+		v[sect + i] += base2; base2 = 0;
+		if (v[sect + i] >= lintbase) { base2 = v[sect + i] / lintbase; v[sect + i] %= lintbase; }
 		else if (i >= j)break;
 		i++;
 	}
+	if (base2) { i++; lintchecksize(a, sect + i); a->v[sect + i - 1] = base2; }
 	a->len = sect + i; return;
 }
 //lint_sub
