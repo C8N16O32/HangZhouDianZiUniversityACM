@@ -298,11 +298,16 @@ void lintm2_FFT(comp*a, const int fla, int *rev, int size) {
 void lintm2(lint *x, lint *y) {
 	int i, j, size, digit;
 	i = x->len + y->len;
-	digit = 2;
-	if (i <= 786416)digit = 3;
-	if (i <= 65520)digit = 4;
-	if (i <= 10224)digit = 5;
-	if (i <= 1280)digit = 6;
+	i = i * 4;
+	//这是按照实际计算999……9*999……9能得出正确答案而确定的方法。还待优化
+	digit = 1;
+	if (i <= 10000000)digit = 2;
+	if (i <= 393208)digit = 3;
+	if (i <= 32760)digit = 4;
+	if (i <= 5112)digit = 5;
+	if (i <= 640)digit = 6;
+	i = x->len + y->len;
+
 
 	//倒序位
 	int *rev = NULL;
