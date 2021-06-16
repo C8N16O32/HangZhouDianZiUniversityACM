@@ -236,7 +236,7 @@ void lintm1(lint *x, lint *y) {
 	return;
 }
 //FFT乘法
-#define lintm2minl 1024
+#define lintm2minl 512
 #define lintm2maxl 2097152*8
 struct comp { double x, y; };
 const double pi = acos(-1);
@@ -283,8 +283,8 @@ void lintm2_FFT(comp*a, const int fla, int *rev, int size) {
 		for (j = 0; j < size; j += (i << 1)) {
 			comp K = { 1,0 };
 			for (k = 0; k < i; k++) {
-				//comuti(&K, w, temp);
-				K = { cos(pi*(k + 1) / i), fla*sin(pi*(k + 1) / i) };//暂时
+				comuti(&K, w, temp);
+				if (i % 64 == 0)K = { cos(pi*(k + 1) / i), fla*sin(pi*(k + 1) / i) };//暂时
 				comp x = a[j + k], y = a[j + k + i];
 				comuti(&y, K, temp);
 				a[j + k] = x; coadd(a + j + k, &y);
