@@ -134,7 +134,8 @@ void linta(lint *a, int num, int section = 0) {
 }
 void lintafast(lint *a, long long num, int sect = 0, int sect2 = 0) {
 	if (num <= 0)return;
-	int i, base = lintbase, base2 = 1; for (i = 0; i < sect2; i++)base2 *= 10; base = lintbase / base2;
+	int i, base, base2, p10[] = { 1,10,100,1000,1e4,1e5,1e6,1e7 };
+	base2 = p10[sect2]; base = p10[8 - sect2];
 	int temp[4] = { 0 };
 	temp[0] = num%base*base2; num /= base;
 	i = 1; while (num) { temp[i] = num%lintbase; num /= lintbase; i++; }
@@ -251,6 +252,29 @@ void lintm2_rev(int **rev, int*size, int len) {
 	*size = s;
 	return;
 }
+void lintm2_scan(comp*a, lint *x, lint *y, int digit) {
+	int i, j, tempi, p10[] = { 1,10,100,1000,1e4,1e5,1e6,1e7,1e8 }, p10d = p10[digit];
+	long long temp;
+	i = 0; j = 0; temp = 0; tempi = 0;
+	while (1) {
+		if (tempi < digit&&i < x->len) {
+			temp += x->v[i] * p10[tempi]; i++; tempi += 8;
+		}
+		a[j].x = temp%p10d; j++;
+		temp /= p10d; tempi -= digit;
+		if (tempi <= 0 && i >= x->len)break;
+	}
+	i = 0; j = 0; temp = 0; tempi = 0;
+	while (1) {
+		if (tempi < digit&&i < y->len) {
+			temp += y->v[i] * p10[tempi]; i++; tempi += 8;
+		}
+		a[j].y = temp%p10d; j++;
+		temp /= p10d; tempi -= digit;
+		if (tempi <= 0 && i >= y->len)break;
+	}
+	return;
+}
 void lintm2_FFT(comp*a, const int fla, int *rev, int size) {
 	int i, j, k; double temp;
 	for (i = 0; i < size; i++)if (i < rev[i])coswap(a + i, a + rev[i], temp);
@@ -259,7 +283,8 @@ void lintm2_FFT(comp*a, const int fla, int *rev, int size) {
 		for (j = 0; j < size; j += (i << 1)) {
 			comp K = { 1,0 };
 			for (k = 0; k < i; k++) {
-				comuti(&K, w, temp);
+				//comuti(&K, w, temp);
+				K = { cos(pi*(k + 1) / i), fla*sin(pi*(k + 1) / i) };//暂时
 				comp x = a[j + k], y = a[j + k + i];
 				comuti(&y, K, temp);
 				a[j + k] = x; coadd(a + j + k, &y);
@@ -271,33 +296,23 @@ void lintm2_FFT(comp*a, const int fla, int *rev, int size) {
 	return;
 }
 void lintm2(lint *x, lint *y) {
-	//倒序位
-	int i, j, temp, *rev = NULL, size = 0; double tempd;
+	int i, j, size, digit;
 	i = x->len + y->len;
-	lintm2_rev(&rev, &size, i * 8);
+	if (i < 1e6)digit = 4; else digit = 3;
+
+	//倒序位
+	int *rev = NULL;
+	lintm2_rev(&rev, &size, i * 8 / digit + 1);
 
 	//a,b传值
-	comp*a = NULL; a = new comp[size]; for (i = 0; i < size; i++) { a[i].x = 0; a[i].y = 0; };
-	for (i = 0; i < x->len; i++) {
-		temp = x->v[i];
-		j = 0; while (temp > 0) {
-			a[i * 8 + j].x = temp % 10;
-			temp /= 10;
-			j++;
-		}
-	}
-	for (i = 0; i < y->len; i++) {
-		temp = y->v[i];
-		j = 0; while (temp > 0) {
-			a[i * 8 + j].y = temp % 10;
-			temp /= 10;
-			j++;
-		}
-	}
+	comp*a = NULL; a = new comp[size];
+	for (i = 0; i < size; i++)a[i] = { 0,0 };
+	lintm2_scan(a, x, y, digit);
 
 	//正变换-序列乘法-反变换
 	lintm2_FFT(a, 1, rev, size);
 
+	double tempd;
 	for (i = 0; i < size; i++)comuti(a + i, a[i], tempd);
 
 	lintm2_FFT(a, -1, rev, size);
@@ -308,10 +323,10 @@ void lintm2(lint *x, lint *y) {
 	//x 传值
 	long long temp2;
 	lintresetv(x);
-	lintchecksize(x, size / 8);
+	lintchecksize(x, size*digit / 8);
 	for (i = 0; i < size; i++) {
 		temp2 = (long long)(a[i].x + 0.49);
-		lintafast(x, temp2, i / 8, i % 8);
+		if (temp2)lintafast(x, temp2, i*digit / 8, i*digit % 8);
 	}
 	x->len = x->size - 1; while (x->v[x->len] == 0)x->len--; x->len++;
 
