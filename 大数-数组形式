@@ -284,7 +284,7 @@ void lintm2_FFT(comp*a, const int fla, int *rev, int size) {
 			comp K = { 1,0 };
 			for (k = 0; k < i; k++) {
 				comuti(&K, w, temp);
-				if (i % 64 == 0)K = { cos(pi*(k + 1) / i), fla*sin(pi*(k + 1) / i) };//暂时
+				if (k % 64 == 0)K = { cos(pi*(k + 1) / i), fla*sin(pi*(k + 1) / i) };//暂时
 				comp x = a[j + k], y = a[j + k + i];
 				comuti(&y, K, temp);
 				a[j + k] = x; coadd(a + j + k, &y);
