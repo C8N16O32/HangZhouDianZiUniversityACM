@@ -38,8 +38,10 @@ void lintdelete(lint **ap) {
 }
 void lintshift(lint *a, int n) {
 	lintchecksize(a, a->len + n);
-	int *av = a->v;
-	for (int i = a->len - 1; i >= 0; i--) { av[i + n] = av[i]; av[i] = 0; }
+	char *av = (char*)a->v;//优化
+	int start = a->len*sizeof(int) - 1;
+	int offset = n * sizeof(int);
+	for (int i = start; i >= 0; i--) { av[i + offset] = av[i]; av[i] = 0; }
 	a->len += n; return;
 }
 void lintcopy(lint *a, lint *b) {
@@ -171,21 +173,7 @@ void lints(lint *a, int num, int section = 0) {
 	return;
 }
 //lint_muti
-#define lintm2minl 1024
-#define lintm2maxl 2097152
-void lintm2(lint *x, lint *y);
 void lintm0(lint *a, lint *b) {
-	if (b->len == 1 && b->v[0] == 1) {
-		return;
-	}
-	if (a->len == 1 && a->v[0] == 1) {
-		lintcopy(a, b);
-		return;
-	}
-	if (a->len == 0 || b->len == 0) {
-		lintresetv(a); lintchecksize(a, 0);
-		return;
-	}
 	int i, j, I, al = a->len, bl = b->len, I2 = al + bl; long long temp = 0, temp2, base = lintbase;
 	lint*c = NULL; lintnew(&c); lintchecksize(c, I2);
 	int *av = a->v, *bv = b->v, *cv = c->v;//优化
@@ -207,6 +195,7 @@ void lintm0(lint *a, lint *b) {
 	return;
 }
 //分治乘法
+void lintm(lint *a, lint *b, int mode = 2);
 void lintm1div(lint *d, lint *s, int end, int start) {
 	if (end > s->len)end = s->len;
 	if (end <= start)return;
@@ -233,55 +222,27 @@ void lintm1sum(lint *q, lint *p, lint *k, int n) {
 	return;
 }
 void lintm1(lint *x, lint *y) {
-	if (y->len == 1 && y->v[0] == 1) {
-		return;
-	}
-	if (x->len == 1 && x->v[0] == 1) {
-		lintcopy(x, y);
-		return;
-	}
-	if (x->len == 0 || y->len == 0) {
-		lintresetv(x); lintchecksize(x, 0);
-		return;
-	}
-	if (x->len >= lintm2minl && y->len >= lintm2minl)
-		if (x->len < lintm2maxl && y->len < lintm2maxl) {
-			lintm2(x, y); return;
-		}
-	if (x->len <= 256 && y->len <= 256) {
-		lintm0(x, y); return;
-	}
 	int n = x->len; if (n < y->len)n = y->len; n = n / 2;
 	lint *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL, *f = NULL;
 	lintnew(&a); lintnew(&b); lintnew(&c); lintnew(&d); lintnew(&e); lintnew(&f);
 	lintm1divmain(x, y, a, b, c, d, e, f, n);
-	lintm1(a, c); lintdelete(&c);
-	lintm1(b, d); lintdelete(&d);
-	lintm1(e, f); lintdelete(&f);
+	lintm(a, c); lintdelete(&c);
+	lintm(b, d); lintdelete(&d);
+	lintm(e, f); lintdelete(&f);
 	lintm1sum(a, b, e, n);
 	lintcopy(x, a);
 	lintdelete(&a); lintdelete(&b); lintdelete(&e);
 	return;
 }
 //FFT乘法
+#define lintm2minl 1024
+#define lintm2maxl 2097152*8
 struct comp { double x, y; };
 const double pi = acos(-1);
-void coswap(comp *a, comp *b) {
-	double temp;
-	temp = a->x; a->x = b->x; b->x = temp;
-	temp = a->y; a->y = b->y; b->y = temp; return;
-}
-void coa(comp *a, comp *b) {
-	a->x += b->x; a->y += b->y; return;
-}
-void cos(comp *a, comp *b) {
-	a->x -= b->x; a->y -= b->y; return;
-}
-void com(comp *a, const comp b) {
-	double x = a->x*b.x - a->y*b.y;
-	double y = a->x*b.y + a->y*b.x;
-	a->x = x; a->y = y; return;
-}
+#define coswap(a,b,temp) { temp = (a)->x; (a)->x = (b)->x; (b)->x = temp; temp = (a)->y; (a)->y = (b)->y; (b)->y = temp; }
+#define coadd(a,b) {(a)->x += (b)->x; (a)->y += (b)->y; }
+#define cosub(a,b) {(a)->x -= (b)->x; (a)->y -= (b)->y; }
+#define comuti(a,b,temp) {temp = (a)->x*(b).x - (a)->y*(b).y; (a)->y = (a)->x*(b).y + (a)->y*(b).x; (a)->x = temp; }
 void lintm2_rev(int **rev, int*size, int len) {
 	int i, tim = 0, s = 1;
 	while (s < len) { s <<= 1; tim++; }
@@ -291,47 +252,35 @@ void lintm2_rev(int **rev, int*size, int len) {
 	return;
 }
 void lintm2_FFT(comp*a, const int fla, int *rev, int size) {
-	int i, j, k;
-	for (i = 0; i < size; i++)if (i < rev[i])coswap(a + i, a + rev[i]);
+	int i, j, k; double temp;
+	for (i = 0; i < size; i++)if (i < rev[i])coswap(a + i, a + rev[i], temp);
 	for (i = 1; i < size; i <<= 1) {
 		const comp w = { cos(pi / i), fla*sin(pi / i) };
 		for (j = 0; j < size; j += (i << 1)) {
 			comp K = { 1,0 };
 			for (k = 0; k < i; k++) {
-				com(&K, w);
+				comuti(&K, w, temp);
 				comp x = a[j + k], y = a[j + k + i];
-				com(&y, K);
-				a[j + k] = x; coa(a + j + k, &y);
-				a[j + k + i] = x; cos(a + j + k + i, &y);
+				comuti(&y, K, temp);
+				a[j + k] = x; coadd(a + j + k, &y);
+				a[j + k + i] = x; cosub(a + j + k + i, &y);
 			}
 		}
 	}
-	for (i = 0; i < size / 2; i++)coswap(a + i, a + size - i - 1);
+	for (i = 0; i < size / 2; i++)coswap(a + i, a + size - i - 1, temp);
 	return;
 }
 void lintm2(lint *x, lint *y) {
-	if (y->len == 1 && y->v[0] == 1) {
-		return;
-	}
-	if (x->len == 1 && x->v[0] == 1) {
-		lintcopy(x, y);
-		return;
-	}
-	if (x->len == 0 || y->len == 0) {
-		lintresetv(x); lintchecksize(x, 0);
-		return;
-	}
-	int i, j, temp, *rev = NULL, size = 0;
+	//倒序位
+	int i, j, temp, *rev = NULL, size = 0; double tempd;
 	i = x->len + y->len;
 	lintm2_rev(&rev, &size, i * 8);
+
 	//a,b传值
-	comp*a = NULL;
-	while (a == NULL)a = new comp[size];
-	for (i = 0; i < size; i++) { a[i].x = 0; a[i].y = 0; };
+	comp*a = NULL; a = new comp[size]; for (i = 0; i < size; i++) { a[i].x = 0; a[i].y = 0; };
 	for (i = 0; i < x->len; i++) {
 		temp = x->v[i];
-		j = 0;
-		while (temp > 0) {
+		j = 0; while (temp > 0) {
 			a[i * 8 + j].x = temp % 10;
 			temp /= 10;
 			j++;
@@ -339,41 +288,67 @@ void lintm2(lint *x, lint *y) {
 	}
 	for (i = 0; i < y->len; i++) {
 		temp = y->v[i];
-		j = 0;
-		while (temp > 0) {
+		j = 0; while (temp > 0) {
 			a[i * 8 + j].y = temp % 10;
 			temp /= 10;
 			j++;
 		}
 	}
-	//正变换
+
+	//正变换-序列乘法-反变换
 	lintm2_FFT(a, 1, rev, size);
-	//a[i]=a[i].*a[i]
-	for (i = 0; i < size; i++)com(a + i, a[i]);
-	//反变换
+
+	for (i = 0; i < size; i++)comuti(a + i, a[i], tempd);
+
 	lintm2_FFT(a, -1, rev, size);
+
 	//归一化
 	for (i = 0; i < size; i++)a[i].x = a[i].y / size / 2;
+
 	//x 传值
 	long long temp2;
 	lintresetv(x);
 	lintchecksize(x, size / 8);
 	for (i = 0; i < size; i++) {
-		temp2 = (int)(a[i].x + 0.49);
+		temp2 = (long long)(a[i].x + 0.49);
 		lintafast(x, temp2, i / 8, i % 8);
 	}
 	x->len = x->size - 1; while (x->v[x->len] == 0)x->len--; x->len++;
+
 	//回收空间
 	delete[]rev; delete[]a;
+
 	return;
 }
-void lintm(lint *a, lint *b, int mode = 2) {
+void lintm(lint *a, lint *b, int mode) {
+	if (b->len == 1 && b->v[0] == 1) {
+		return;
+	}
+	if (a->len == 1 && a->v[0] == 1) {
+		lintcopy(a, b);
+		return;
+	}
+	if (a->len == 0 || b->len == 0) {
+		lintresetv(a); lintchecksize(a, 0);
+		return;
+	}
+	if (a->len >= lintm2minl && b->len >= lintm2minl)
+		if (a->len < lintm2maxl && b->len < lintm2maxl) {
+			//if (a->len >= lintm2mtminl && b->len >= lintm2mtminl)
+			//	lintm2_mutithread(a, b);
+			//else 
+				lintm2(a, b); return;
+		}
+	if (a->len <= 256 && b->len <= 256) {
+		lintm0(a, b); return;
+	}
 	switch (mode) {
 	case 1:lintm0(a, b); return;//原始竖式乘法 o(n^2)
 	case 2:lintm1(a, b); return;//分治乘法 o(n^1.59)
-								//case 3:lintm1s(a, b); return;//手动设置一个栈的乘法2 o(n^1.59) 优化效果不明显
-	case 4:lintm2(a, b); return;//FFT乘法 ≈o(n)
+	case 4:lintm2(a, b); return;//FFT乘法 ≈o(nlogn)
+	default:break;
 	}
+	return;
 }
 void lintm(lint *a, int num, int section = 0, int mode = 2) {
 	lint*c = NULL; lintnew(&c); lintchecksize(c, section + 1);
