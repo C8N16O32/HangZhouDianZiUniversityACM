@@ -236,7 +236,7 @@ void lintm1(lint *x, lint *y) {
 	return;
 }
 //FFT乘法
-#define lintm2minl 512
+#define lintm2minl 64
 #define lintm2maxl 2097152*8
 struct comp { double x, y; };
 const double pi = acos(-1);
