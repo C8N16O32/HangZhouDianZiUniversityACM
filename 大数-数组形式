@@ -305,9 +305,8 @@ void lintm2_FFT(comp*a, const int fla, int *rev, int size) {
 void lintm2(lint *x, lint *y) {
 	int i, j, size, digit;
 	i = x->len + y->len;
-	i = i * 4;
-	digit = 1;
-	if (i <= 10000000)digit = 2;
+	i = i * 4; //i*8/2
+	digit = 2;
 	if (i <= 393208)digit = 3;
 	if (i <= 32760)digit = 4;
 	if (i <= 5112)digit = 5;
@@ -332,6 +331,7 @@ void lintm2(lint *x, lint *y) {
 	lintm2_FFT(a, -1, rev, size);
 
 	//归一化
+	delete[]rev; 
 	for (i = 0; i < size; i++)a[i].x = a[i].y / size / 2;
 
 	//x 传值
@@ -345,7 +345,7 @@ void lintm2(lint *x, lint *y) {
 	while (x->v[x->len - 1] == 0)x->len--;
 
 	//回收空间
-	delete[]rev; delete[]a;
+	delete[]a;
 
 	return;
 }
