@@ -2,8 +2,8 @@
 struct lint { int len = 0; int size = 0; int* v = NULL; };//length、size、value
 #define lintminl 64
 #define lintbase 100000000
-#define lintchecksize(a, tsize) if ( (tsize) > (a)->size ||(tsize) >= lintminl && (tsize) * 2 <= (a)->size )lintresetsize(a, tsize)
-//#define lintnewstatic(a) static lint *a = NULL; if (a != NULL)lintresetv(a); else lintnew(&a)//静态变量在多线程时不安全
+#define lintchecksize(a, tsize) if ( (tsize) > (a)->size ||(tsize) >= lintminl && (tsize) * 2 <= (a)->size ||(tsize) < lintminl && lintminl * 2 <= (a)->size )lintresetsize(a, tsize)
+
 //lint_basic
 void lintresetsize(lint *a, int size) {
 	int i = lintminl; while (i < size)i *= 2; int sizenew = i;
@@ -14,7 +14,7 @@ void lintresetsize(lint *a, int size) {
 void lintresetv(lint *a) {
 	char *av = (char*)(a->v);//优化
 	int I = a->len*sizeof(int);
-	for (int i = 0; i < I; i++)av[i] = '\0'; a->len = 0;
+	for (int i = 0; i < I; i++)av[i] = 0; a->len = 0;
 	return;
 }
 void lintnew(lint*a) {
@@ -66,15 +66,17 @@ int lintcmp(lint *a, lint *b) {
 void lintprintfvalue(lint *a) {
 	int i, j, isfirst = 1;
 	char dest[40096] = "\0", *destp = dest;
-	for (i = a->len - 1; i >= 0; i--)
+	for (i = a->len - 1; i >= 0; i--) {
+		if (a->len - i > 12500000) { printf("\n打印中止：打印长度超过了1亿位\n"); break; }
 		if (isfirst) {
 			isfirst = 0; if (a->v[i])destp += sprintf(destp, "%d", a->v[i]);
 		}
 		else if (destp - dest < 40000)destp += sprintf(destp, "%08d", a->v[i]);
 		else { printf("%s", dest); destp = dest; for (j = 0; j < 40096; j++)dest[j] = 0; }
-		if (isfirst)printf("0");
-		else printf("%s", dest);
-		return;
+	}
+	if (isfirst)printf("0");
+	else printf("%s", dest);
+	return;
 }
 void lintprintfstrlen(lint *a) {
 	//长度
@@ -132,23 +134,28 @@ void linta(lint *a, int num, int section = 0) {
 	lintdelete(&b);
 	return;
 }
-void lintafast(lint *a, long long num, int sect = 0, int sect2 = 0) {
+void lintafast(lint *a, unsigned long long num, int sect = 0, int sect2 = 0) {
 	if (num <= 0)return;
-	int i, base, base2, p10[] = { 1,10,100,1000,1e4,1e5,1e6,1e7 };
+	int i, base, base2, p10[9] = { 1,10,100,1000,10000,100000,1000000,10000000,100000000 };
 	base2 = p10[sect2]; base = p10[8 - sect2];
-	int temp[4] = { 0 };
+	int temp[5] = { 0 };
 	temp[0] = num%base*base2; num /= base;
 	i = 1; while (num) { temp[i] = num%lintbase; num /= lintbase; i++; }
 	int*v = a->v, size = a->size;//优化
+	int j = 5; while (j > 0 && temp[j - 1] == 0)j--;
+	int temp0 = 0;
 	i = 0;
 	while (sect + i < size) {
-		if (i < 4)v[sect + i] += temp[i];
-		if (v[sect + i] >= lintbase) { temp[i + 1] += v[sect + i] / lintbase; v[sect + i] %= lintbase; }
-		else if (i >= 4)break;
+		v[sect + i] += temp0; temp0 = 0;
+		if (i < j)v[sect + i] += temp[i];
+		if (v[sect + i] >= lintbase) { temp0 = v[sect + i] / lintbase; v[sect + i] %= lintbase; }
+		else if (i >= j)break;
 		i++;
 	}
-	a->len = sect + i; return;
+	if (sect + i < size)i++;
+	if (a->len < sect + i)a->len = sect + i; return;
 }
+
 //lint_sub
 void lints(lint *a, lint *b) {
 	//不支持负数
@@ -190,7 +197,7 @@ void lintm0(lint *a, lint *b) {
 		}
 		lintafast(c, temp%base, i); temp /= base;
 	}
-	i = c->size - 1; while (cv[i] == 0)i--; c->len = i + 1;
+	while (c->v[c->len - 1] == 0)c->len--;
 	lintcopy(a, c);
 	lintdelete(&c);
 	return;
@@ -299,7 +306,6 @@ void lintm2(lint *x, lint *y) {
 	int i, j, size, digit;
 	i = x->len + y->len;
 	i = i * 4;
-	//这是按照实际计算999……9*999……9能得出正确答案而确定的方法。还待优化
 	digit = 1;
 	if (i <= 10000000)digit = 2;
 	if (i <= 393208)digit = 3;
@@ -308,15 +314,13 @@ void lintm2(lint *x, lint *y) {
 	if (i <= 640)digit = 6;
 	i = x->len + y->len;
 
-
 	//倒序位
 	int *rev = NULL;
 	lintm2_rev(&rev, &size, i * 8 / digit + 1);
 
 	//a,b传值
 	comp*a = NULL; a = new comp[size];
-	for (i = 0; i < size; i++) { a[i].x = 0; a[i].y = 0; }
-
+	for (i = 0; i < size; i++) a[i] = { 0,0 };
 	lintm2_scan(a, x, y, digit);
 
 	//正变换-序列乘法-反变换
@@ -333,12 +337,12 @@ void lintm2(lint *x, lint *y) {
 	//x 传值
 	unsigned long long temp2;
 	lintresetv(x);
-	lintchecksize(x, size*digit / 8);
+	lintchecksize(x, size*digit / 8 + 1);
 	for (i = 0; i < size; i++) {
 		temp2 = (unsigned long long)(a[i].x + 0.49);
 		if (temp2)lintafast(x, temp2, i*digit / 8, i*digit % 8);
 	}
-	while (x->v[x->len] == 0)x->len--; x->len++;
+	while (x->v[x->len - 1] == 0)x->len--;
 
 	//回收空间
 	delete[]rev; delete[]a;
@@ -362,7 +366,7 @@ void lintm(lint *a, lint *b, int mode) {
 			//if (a->len >= lintm2mtminl && b->len >= lintm2mtminl)
 			//	lintm2_mutithread(a, b);
 			//else 
-				lintm2(a, b); return;
+			lintm2(a, b); return;
 		}
 	if (a->len <= 256 && b->len <= 256) {
 		lintm0(a, b); return;
@@ -378,7 +382,7 @@ void lintm(lint *a, lint *b, int mode) {
 void lintm(lint *a, int num, int section = 0, int mode = 2) {
 	lint*c = NULL; lintnew(&c); lintchecksize(c, section + 1);
 	linta(c, num, section);
-	lintm(a, c, mode); 
+	lintm(a, c, mode);
 	lintdelete(&c); return;
 }
 //lint_div
@@ -415,15 +419,15 @@ int lintd(lint *a, lint *b) {
 void lintd(lint *a, int num, int section = 0) {
 	lint*c = NULL; lintnew(&c); lintchecksize(c, a->len);
 	linta(c, num, section);
-	lintd(a, c); 
-	lintdelete(&c); 
+	lintd(a, c);
+	lintdelete(&c);
 	return;
 }
 //二分乘法
 #define lintmslen 32
 #define lintmsminl 16
 void lintmsnew(lint**temp) {
-	for (int i = 0; i < lintmslen; i++) { lintnew(temp + i); linta(temp[i], 1); }return;
+	for (int i = 0; i < lintmslen; i++) { lintnew(temp + i); temp[i]->v[0] = 1; temp[i]->len = 1; }return;
 }
 void lintmsnew(lint***ptemp) {
 	*ptemp = new lint*[lintmslen];
@@ -433,7 +437,7 @@ void lintmsdelete(lint**temp) {
 	for (int i = 0; i < lintmslen; i++)lintdelete(temp + i); return;
 }
 void lintmsdelete(lint***ptemp) {
-	lintdelete(*ptemp);
+	lintmsdelete(*ptemp);
 	delete[] * ptemp; *ptemp = NULL; return;
 }
 void lintmsresetv(lint**temp) {
