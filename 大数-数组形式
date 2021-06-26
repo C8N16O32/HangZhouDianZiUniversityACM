@@ -67,12 +67,17 @@ void lintprintfvalue(lint *a) {
 	int i, j, isfirst = 1;
 	char dest[40096] = "\0", *destp = dest;
 	for (i = a->len - 1; i >= 0; i--) {
-		if (a->len - i > 12500000) { printf("\n打印中止：打印长度超过了1亿位\n"); break; }
+		if (a->len - i > 12500000) { printf("\n打印中止：打印长度超过了1亿位\n"); return; }
 		if (isfirst) {
 			isfirst = 0; if (a->v[i])destp += sprintf(destp, "%d", a->v[i]);
 		}
-		else if (destp - dest < 40000)destp += sprintf(destp, "%08d", a->v[i]);
-		else { printf("%s", dest); destp = dest; for (j = 0; j < 40096; j++)dest[j] = 0; }
+		else {
+			destp += sprintf(destp, "%08d", a->v[i]);
+			if (destp - dest >= 40000) { 
+				printf("%s", dest); destp = dest; 
+				for (j = 0; j < 40096; j++)dest[j] = 0; 
+			}
+		}
 	}
 	if (isfirst)printf("0");
 	else printf("%s", dest);
