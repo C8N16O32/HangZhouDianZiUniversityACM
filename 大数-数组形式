@@ -364,6 +364,68 @@ void lintd(lint *a, int num, int section = 0) {
 
 //     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+//     数组大数 高级内容 二分法连乘
+//         需要 stdio.h
+//     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//二分法连乘
+#define lintmslen 32
+#define lintmsminl 16
+void lintmsnew(lint**temp) {
+	for (int i = 0; i < lintmslen; i++) { lintnew(temp + i); temp[i]->v[0] = 1; temp[i]->len = 1; }return;
+}
+void lintmsnew(lint***ptemp) {
+	*ptemp = new lint*[lintmslen];
+	lintmsnew(*ptemp); return;
+}
+void lintmsdelete(lint**temp) {
+	for (int i = 0; i < lintmslen; i++)lintdelete(temp + i); return;
+}
+void lintmsdelete(lint***ptemp) {
+	lintmsdelete(*ptemp);
+	delete[] * ptemp; *ptemp = NULL; return;
+}
+void lintmsresetv(lint**temp) {
+	for (int i = 0; i < lintmslen; i++) { lintresetv(temp[i]); temp[i]->v[0] = 1; temp[i]->len = 1; }return;
+}
+void lintms(lint**temp, int n, int section = 0) {
+	int ti = 0; int tb = lintmsminl;
+	lintm(temp[0], n, section);
+	while (temp[ti]->len >= tb) {
+		lintm(temp[ti + 1], temp[ti]);
+		lintresetv(temp[ti]); temp[ti]->v[0] = 1; temp[ti]->len = 1;
+		tb *= 2; ti++;
+	}
+	return;
+}
+void lintms(lint**temp, lint *a) {
+	int ti = 0; int tb = lintmsminl;
+	while (ti<lintmslen&&a->len >= tb) {
+		tb *= 2; ti++;
+	}
+	lintm(temp[ti], a);
+	while (temp[ti]->len >= tb) {
+		lintm(temp[ti + 1], temp[ti]);
+		lintresetv(temp[ti]); temp[ti]->v[0] = 1; temp[ti]->len = 1;
+		tb *= 2; ti++;
+	}
+	return;
+}
+void lintms(lint**temp, lint**temp2) {
+	for (int i = 0; i < lintmslen; i++)lintms(temp, temp2[i]); return;
+}
+void lintms2lint(lint**temp, lint *a) {
+	for (int i = 0; i < lintmslen; i++)lintm(a, temp[i]); return;
+}
+
+//     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//     数组大数 高级内容 二分法连乘 end
+//
+//     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 //     数组大数 高级内容 FFT乘法
 //         需要stdio.h math.h
 //     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
