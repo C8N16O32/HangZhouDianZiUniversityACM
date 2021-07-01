@@ -69,3 +69,39 @@
       *   质因数表导出为大数（其中使用了快速幂与二分法连乘）
       *     pri2lintms pri2lint
 
+## 多线程二维级联FFT
+* 多线程框架
+    * 功能：为互不通信的线性流程实现多线程运算
+    * 主要数据类型：结构体指针 thdata*
+      *     struct thdata {
+      *     int thnum, thnumbackup; //线程数量
+      *     HANDLE *lockflag = NULL; //互斥资源锁
+      *     int thord, thstillrun, thsync; //分配编号，记录进度，启动计算
+      *     int funtype; //计算的大项
+      *     void *data; //计算需要的数据
+      *     };
+    * 操作说明：
+      *     设计数据结构体，分离出并行计算的部分。详见具体代码
+    * 相关函数与宏
+      *   子线程函数 主函数
+      *     ththread thmain
+* 多线程二维级联FFT
+    * 功能：多线程二维级联FFT
+    * 主要数据类型：结构体指针 comat* thread_lintm2matdata*
+      *     struct comat { comp **v = NULL; int size; };
+      *     struct thread_lintm2matdata {
+      *     	int funtype;
+      *     	lint *x, *y;
+      *     	int *rev;
+      *     	comat *ma, *mb;
+      *     	int digit, fla;
+      *     	};
+    * 操作说明：
+      *     在使用常规fft的基础上，取消lintm对lintm2mat_mutithread的注释
+    * 相关函数与宏：
+      *   并行部分
+      *     thfun_lintm2mat_scan thfun_lintm2mat_fft2lint thfun_lintm2mat
+      *   其余部分
+      *     thmain_lintm2mat_FFT thmain_lintm2mat 
+      *   封装
+      *     lintm2mat_mutithread
