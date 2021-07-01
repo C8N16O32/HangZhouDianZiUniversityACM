@@ -87,7 +87,8 @@
       *     ththread thmain
 * 多线程二维级联FFT
     * 功能：多线程二维级联FFT
-    * 主要数据类型：结构体指针 comat* thread_lintm2matdata*
+    * 主要数据类型：结构体指针 comp*  comat*  thread_lintm2matdata*
+      *     struct comp { double x, y; };
       *     struct comat { comp **v = NULL; int size; };
       *     struct thread_lintm2matdata {
       *     	int funtype;
@@ -98,7 +99,11 @@
       *     	};
     * 操作说明：
       *     在使用常规fft的基础上，取消lintm对lintm2mat_mutithread的注释
+    * 额外说明：
+      *     通过一些数学方法减少了一次正变换，减少了2次矩阵转置。通过一些测试得到了更加激进的压位表。
     * 相关函数与宏：
+      *   复矩阵：申请空间、删除空间、清零、打印、复制、矩阵乘法、矩阵转置
+      *     comatnew comatdelete comatresetv comatprint comatcopy comatm comatt
       *   并行部分
       *     thfun_lintm2mat_scan thfun_lintm2mat_fft2lint thfun_lintm2mat
       *   其余部分
