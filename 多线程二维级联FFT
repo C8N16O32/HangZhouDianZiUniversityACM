@@ -1,0 +1,447 @@
+//    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//    简单的多线程框架
+//    需要 stdio.h windows.h
+//    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//简单的多线程-框架
+struct thdata {
+	int thnum, thnumbackup;
+	HANDLE *lockflag = NULL;
+	int thord, thstillrun, thsync;
+	int funtype;
+	void *data;
+};
+void thfun_lintm2(void* data, int n, int N, HANDLE *lockflag);
+void thmain_lintm2(thdata *lp);
+void thfun_lintm2mat(void* data, int n, int N, HANDLE *lockflag);
+void thmain_lintm2mat(thdata *lp);
+DWORD WINAPI ththread(LPVOID lp) {
+	thdata *p = (thdata*)lp;
+	int n, N, sync = 0, syncnow;
+
+	while (1) {
+		//等待
+		while (1)
+		{
+			syncnow = p->thsync;
+			if (syncnow != sync) { sync = syncnow; break; }
+			//子线程退出
+			if (syncnow == -1) {
+				WaitForSingleObject(*p->lockflag, INFINITE);//加锁
+				p->thstillrun -= 1;
+				ReleaseMutex(*p->lockflag);//解锁
+				return 0;
+			}
+			Sleep(1);
+		}
+
+		//子线程获取编号
+		n = -1; N = p->thnum;
+		WaitForSingleObject(*p->lockflag, INFINITE);//加锁
+		if (p->thord < N) { n = p->thord; p->thord++; }
+		ReleaseMutex(*p->lockflag);//解锁
+		if (n == -1)continue;
+
+		//计算
+		switch (p->funtype)
+		{
+		case 2:thfun_lintm2(p->data, n, N, p->lockflag); break;
+		case 20:thfun_lintm2mat(p->data, n, N, p->lockflag); break;
+		default:
+			break;
+		}
+
+		//子线程表示任务已完成
+		WaitForSingleObject(*p->lockflag, INFINITE);//加锁
+		p->thstillrun -= 1;
+		ReleaseMutex(*p->lockflag);//解锁
+
+								   //子线程退出
+		if (syncnow == -1)return 0;
+	}
+}
+#define thstart lp->thord = 0; lp->thstillrun = lp->thnum; lp->thsync = 1 - lp->thsync; while (lp->thstillrun)Sleep(1)
+void thmain(int funtypemain, void *data, int threadnum = 6) {
+	//静态变量
+	thdata lp0, *lp = &lp0;
+	HANDLE lockflag, *h;
+	int i;
+
+	//线程创建
+	lp->thnum = threadnum;
+	lp->thnumbackup = lp->thnum;
+	lp->thsync = 0;
+	lockflag = CreateMutexW(NULL, FALSE, NULL);
+	lp->lockflag = &lockflag;
+	h = new HANDLE[lp->thnum];
+	for (i = 0; i < lp->thnum; i++)
+		h[i] = CreateThread(NULL, 0, ththread, lp, 0, NULL);
+
+	//任务
+	lp->funtype = funtypemain; lp->data = data;
+	switch (lp->funtype)
+	{
+	case 2:thmain_lintm2(lp); break;
+	case 20:thmain_lintm2mat(lp); break;
+	default:
+		break;
+	}
+
+	//线程结束
+	lp->thstillrun = threadnum;
+	lp->thsync = -1;
+	while (lp->thstillrun)Sleep(1);
+	for (i = 0; i < threadnum; i++)if (h[i])CloseHandle(h[i]);
+	delete[]h;
+
+	return;
+}
+
+
+//    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//    简单的多线程框架 end
+//
+//    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//    二维级联FFT 多线程版本
+//    需要 stdio.h math.h windows.h
+//    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//简单的多线程-二维FFT 与复矩阵
+struct comat { comp **v = NULL; int size; };
+void comatresetv(comat *a) {
+	int i, j, size = a->size;
+	comp *avi = NULL;
+	for (i = 0; i < size; i++) {
+		avi = (a)->v[i];
+		for (j = 0; j < size; j++)avi[j] = { 0,0 };
+	}
+}
+void comatnew(comat **a, int size) {
+	int i, j;
+	*a = new comat;
+	(*a)->v = new comp*[size];
+	comp *avi = NULL;
+	for (i = 0; i < size; i++) {
+		(*a)->v[i] = new comp[size];
+		avi = (*a)->v[i];
+		for (j = 0; j < size; j++)avi[j] = { 0,0 };
+	}
+	(*a)->size = size; return;
+}
+void comatdelete(comat **a) {
+	int i, size = (*a)->size;
+	for (i = 0; i < size; i++)
+		delete[](*a)->v[i];
+	delete[](*a)->v; (*a)->v = NULL;
+	delete[](*a);
+	return;
+}
+void comatprint(comat *a) {
+	int i, j, size = a->size;
+	comp **av = a->v;
+	for (i = 0; i < size; i++) {
+		for (j = 0; j < size; j++)
+			printf("[%.0lf, %.0lf]\t", av[i][j].x, av[i][j].y);
+	}
+	printf("\n");
+	return;
+}
+void comatcopy(comat *a, comat *b) {
+	int i, j, size = a->size;
+	comp **av = a->v, **bv = b->v;
+	for (i = 0; i < size; i++) {
+		for (j = 0; j < size; j++)
+			av[i][j] = bv[i][j];
+	}return;
+}
+void comatm(comat *a, comat *b) {
+	int i, j, k, size = a->size;
+	comp temp, temp2; double tempd;
+	comp **av = a->v, **bv = b->v;
+	comat *c = NULL; comatnew(&c, size);
+	for (i = 0; i < size; i++) {
+		for (j = 0; j < size; j++) {
+			temp = { 0,0 };
+			for (k = 0; k < size; k++) {
+				temp2 = av[i][k];
+				comuti(&temp2, bv[k][j], tempd);
+				coadd(&temp, &temp2);
+			}
+			c->v[i][j] = temp;
+		}
+	}
+	comatcopy(a, c); comatdelete(&c); return;
+}
+void comatt(comat *a) {
+	//转置 transpose
+	comat *b; comatnew(&b, a->size);
+	int i, j, size = a->size;
+	comp **av = a->v, **bv = b->v;
+	for (i = 0; i < size; i++) {
+		for (j = 0; j < size; j++)
+			bv[i][j] = av[j][i];
+	}
+	comatcopy(a, b); comatdelete(&b); return;
+}
+struct thread_lintm2matdata {
+	int funtype;
+	lint *x, *y;
+	int *rev;
+	comat *ma;
+	comat *mb;
+	int digit;
+	int fla;
+};
+void thfun_lintm2mat_scan(void* data, int n, int N, HANDLE *lockflag) {
+	//传值
+	thread_lintm2matdata *p = (thread_lintm2matdata *)data;
+	comat*ma = p->ma; int digit = p->digit;
+	lint *x = p->x, *y = p->y;
+	int i, j, tempi, p10[9] = { 1,10,100,1000,10000,1e5,1e6,1e7,1e8 }, p10d = p10[digit];
+	long long temp; comp*a;
+	int r, size = ma->size;
+	//分解
+	int len, start, end;
+	len = size / N;
+	start = len*n; end = len*(n + 1);
+	if (n + 1 == N)end = size;
+	//执行
+	j = start*size*digit; i = j / 8; j -= i * 8;
+	temp = 0; tempi = 0;
+	if (i < x->len) { temp = x->v[i] / p10[j]; tempi = 8 - j; }
+	i++; j = 0;
+	r = start; a = ma->v[r];
+	while (1) {
+		if (tempi < digit&&i < x->len) {
+			temp += x->v[i] * (long long)1 * p10[tempi]; i++; tempi += 8;
+		}
+		a[j].x = temp%p10d; j++;
+		if (j >= size) { j = 0; r++; a = ma->v[r]; if (r >= end)break; }
+		temp /= p10d; tempi -= digit;
+		if (tempi <= 0 && i >= x->len)break;
+	}
+
+	j = start*size*digit; i = j / 8; j -= i * 8;
+	temp = 0; tempi = 0;
+	if (i < y->len) { temp = y->v[i] / p10[j]; tempi = 8 - j; }
+	i++; j = 0;
+	r = start; a = ma->v[r];
+	while (1) {
+		if (tempi < digit&&i < y->len) {
+			temp += y->v[i] * (long long)1 * p10[tempi]; i++; tempi += 8;
+		}
+		a[j].y = temp%p10d; j++;
+		if (j >= size) { j = 0; r++; a = ma->v[r]; if (r >= end)break; }
+		temp /= p10d; tempi -= digit;
+		if (tempi <= 0 && i >= y->len)break;
+	}
+
+	return;
+}
+void thfun_lintm2mat_fft2lint(void* data, int n, int N, HANDLE *lockflag) {
+	//传值
+	thread_lintm2matdata *p = (thread_lintm2matdata *)data;
+	int len, start, end, i, j, k;
+	comat *ma = p->ma;
+	int size = ma->size;
+	int digit = p->digit;
+	//分割
+	len = size*size / N;
+	start = len*n; end = len*(n + 1);
+	if (n + 1 == N)end = size*size;
+	//偏移量
+	i = start*digit;
+	int offsetA = i / 8, offsetB = i % 8;
+	//计算
+	lint *x = NULL;
+	comp**av = ma->v;
+	unsigned long long temp2; int tempcount = 0;
+	lintnew(&x);
+	lintchecksize(x, len*digit / 8 + 6);
+	for (k = start; k < end; k++) {
+		i = k / size; j = k%size;
+		temp2 = (unsigned long long)(av[i][j].x + 0.4999);
+		tempcount = (k - start)*digit + offsetB;
+		if (temp2)lintafast(x, temp2, tempcount / 8, tempcount % 8);
+	}
+	while (x->v[x->len - 1] == 0)x->len--;
+	//传值
+	WaitForSingleObject(*lockflag, INFINITE);//加锁
+	linta(p->x, x, offsetA);
+	ReleaseMutex(*lockflag);//解锁
+
+	lintdelete(&x);
+	return;
+}
+void thfun_lintm2mat(void* data, int n, int N, HANDLE *lockflag) {
+	//传值
+	thread_lintm2matdata *p = (thread_lintm2matdata *)data;
+	int len, start, end, i;
+	comat *ma = p->ma;
+	int size = ma->size;
+
+	//分割
+	len = size / N;
+	start = len*n; end = len*(n + 1);
+	if (n + 1 == N)end = size;
+
+	//计算
+	int j, size2 = size*size; comp*v = NULL, **av = ma->v, **bv = NULL, K;
+	double temp;
+	switch (p->funtype)
+	{
+		//传值
+	case 1:
+		thfun_lintm2mat_scan(data, n, N, lockflag);
+		break;
+		//列变换
+	case 2:
+		v = new comp[size];
+		for (i = start; i < end; i++) {
+			for (j = 0; j < size; j++)v[j] = av[j][i];
+			lintm2_FFT(v, p->fla, p->rev, size);
+			for (j = 0; j < size; j++)av[j][i] = v[j];
+		} delete[]v;
+		break;
+		//行变换
+	case 3:
+		for (i = start; i < end; i++)
+			lintm2_FFT(av[i], p->fla, p->rev, size);
+		break;
+		//单位根复乘
+	case 4:
+		for (i = start; i < end; i++) {
+			for (j = 0; j < size; j++) {
+				K = { cos(pi * 2 * i*j / size2), -p->fla*sin(pi * 2 * i*j / size2) };
+				comuti(av[i] + j, K, temp);
+			}
+		}break;
+		//矩阵转置
+	case 5:
+		bv = p->mb->v;
+		for (i = start; i < end; i++) {
+			for (j = 0; j < size; j++)
+				bv[j][i] = av[i][j];
+			delete[]av[i]; av[i] = NULL;
+		}
+		break;
+		//序列自乘
+	case 6:
+		for (i = start; i < end; i++)
+			for (j = 0; j < size; j++)
+				comuti(av[i] + j, av[i][j], temp);
+		break;
+		//虚部转换
+	case 7:
+		for (i = start; i < end; i++)
+			for (j = 0; j < size; j++)
+				av[i][j].x = av[i][j].y / 2;
+		break;
+		//传值
+	case 8:
+		thfun_lintm2mat_fft2lint(data, n, N, lockflag); break;
+	default:
+		break;
+	}
+	return;
+}
+void thmain_lintm2mat_FFT(thdata *lp) {
+	thread_lintm2matdata *p = (thread_lintm2matdata*)lp->data;
+
+	if (p->fla == 1) {
+		//列变换
+		p->funtype = 2;
+		thstart;
+		//数乘单位根
+		p->funtype = 4;
+		thstart;
+		//行变换
+		p->funtype = 3;
+		thstart;
+	}
+	else {
+		//行变换
+		p->funtype = 3;
+		thstart;
+		//数乘单位根
+		p->funtype = 4;
+		thstart;
+		//列变换
+		p->funtype = 2;
+		thstart;
+	}
+	return;
+}
+void thmain_lintm2mat(thdata *lp) {
+	thread_lintm2matdata *p = (thread_lintm2matdata*)lp->data;
+	int i, j;
+	lint*x = p->x, *y = p->y;
+
+	i = x->len + y->len;
+	i = i * 4;
+	int digit = 3;
+	if (i <= 6117000)digit = 4;
+	if (i <= 40952)digit = 5;
+	if (i <= 3064)digit = 6;
+	if (i <= 80)digit = 7;
+	p->digit = digit;
+	i = x->len + y->len;
+
+	//倒序位
+	int *rev = NULL;
+	i = i * 8 / digit + 1;
+	int size = 1; while (size*size < i)size *= 2;
+	lintm2_rev(&rev, &size, size);
+	p->rev = rev;
+
+	//a,b传值
+	comat*ma = NULL; comatnew(&ma, size);
+	p->ma = ma;
+	p->funtype = 1;
+	thstart;
+
+	//正变换-序列乘法-反变换
+	p->fla = 1;
+	thmain_lintm2mat_FFT(lp);
+
+	p->funtype = 6;
+	thstart;
+
+	p->fla = -1;
+	thmain_lintm2mat_FFT(lp);
+
+	//传值
+	delete[]rev;
+	p->funtype = 7;
+	thstart;
+
+	//x 传值
+	lintresetv(x);
+	lintchecksize(x, size*size*digit / 8 + 1);
+	p->x = x;
+
+	p->funtype = 8;
+	thstart;
+
+	//回收空间
+	comatdelete(&ma);
+	//delete[]rev; //此代码已移动到更早的时候
+	return;
+}
+void lintm2mat_mutithread(lint *x, lint *y, int threadnuma) {
+	thread_lintm2matdata d;
+	d.x = x; d.y = y;
+	thmain(20, &d, threadnuma);
+	return;
+}
+
+//    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//    二维级联FFT 多线程版本 end
+//
+//    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
