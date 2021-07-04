@@ -64,7 +64,7 @@
     * 相关函数与宏
       *   申请空间同时完成筛查表、质因数表、质数表；释放空间、清空质因数表、复制质因数表的一部分
       *     prinewandset (1个重定义) pridelete (1个重定义) prireserv pricopy
-      *   分解质因数：分解一个数组，分解阶乘，分解排列数
+      *   分解质因数：分解数n，分解阶乘n!，分解排列数C(n,m)
       *     prif1 priffact prifcnm
       *   质因数表导出为大数（其中使用了快速幂与二分法连乘）
       *     pri2lintms pri2lint
@@ -102,7 +102,7 @@
     * 额外说明：
       *     通过一些数学方法减少了一次正变换，减少了2次矩阵转置。通过一些测试得到了更加激进的压位表。
     * 相关函数与宏：
-      *   复矩阵：申请空间、删除空间、清零、打印、复制、矩阵乘法、矩阵转置
+      *   申请空间、删除空间、清零、打印、复制、矩阵乘法、矩阵转置 (均为复矩阵相关)
       *     comatnew comatdelete comatresetv comatprint comatcopy comatm comatt
       *   并行部分
       *     thfun_lintm2mat_scan thfun_lintm2mat_fft2lint thfun_lintm2mat
