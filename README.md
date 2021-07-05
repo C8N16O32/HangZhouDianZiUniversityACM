@@ -77,8 +77,7 @@
       *     int thnum, thnumbackup; //线程数量
       *     HANDLE *lockflag = NULL; //互斥资源锁
       *     int thord, thstillrun, thsync; //分配编号，记录进度，启动计算
-      *     int funtype; //计算的大项
-      *     void *data; //计算需要的数据
+      *     int funtype; void *data; //代号与数据
       *     };
     * 操作说明：
       *     设计数据结构体，分离出并行计算的部分。详见具体代码
@@ -88,14 +87,12 @@
 * 多线程二维级联FFT
     * 功能：多线程二维级联FFT
     * 主要数据类型：结构体指针 comp*  comat*  thread_lintm2matdata*
-      *     struct comp { double x, y; };
-      *     struct comat { comp **v = NULL; int size; };
+      *     struct comp { double x, y; }; //复数
+      *     struct comat { comp **v = NULL; int size; }; //复矩阵
       *     struct thread_lintm2matdata {
-      *     	int funtype;
-      *     	lint *x, *y;
-      *     	int *rev;
-      *     	comat *ma, *mb;
-      *     	int digit, fla;
+      *     	int funtype; //内部代号
+      *     	lint *x, *y; //被乘数与乘数
+      *     	int *rev; comat *ma, *mb; int digit, fla; //主要中间变量
       *     	};
     * 操作说明：
       *     在使用常规fft的基础上，取消lintm对lintm2mat_mutithread的注释
