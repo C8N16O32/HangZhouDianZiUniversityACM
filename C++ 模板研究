@@ -1,0 +1,49 @@
+实际使用中 兼容lambda表达式的部分与apply方法可以选择性的省略
+
+//模板 函数LD：将lambda表达式降级为函数指针
+template<typename T>struct LambdaDecay_impl;
+template<typename C, typename R, typename...Args>
+	struct LambdaDecay_impl<R(C::*)(Args...) const> { using type = R(*)(Args...); };
+template<typename T>struct LambdaDecay { using type = typename LambdaDecay_impl<decltype(&T::operator())>::type; };
+template<typename T>using LDR = typename LambdaDecay<T>::type;
+template<typename F>LDR<F> LD(F lambda) { return LDR<F>(lambda); };
+
+//模板：生成下标
+template<int ...s>struct sseq {};
+template<int i, int ...s>struct sseq_temp :sseq_temp<i - 1, i - 1, s...> {};
+template<int ...s>struct sseq_temp<0, s...> { typedef sseq<s...> type; };
+
+//模板：函数形参
+template<typename R, typename ...T>
+struct S1 {
+	//基础
+	R(*F)(T...);
+	explicit S1<R, T...>(decltype(F) f0) { F = f0; };
+	R operator()(T ...args) { return F(args...); };
+	//apply方法
+	typename sseq_temp<sizeof...(T)>::type stemp;
+	template<typename V,int ...s>
+	R apply_call(V*v, sseq<s...> stemp2) { return operator()(((T)(v[s]))...); };
+	template<typename V>
+	R apply(V*v) { return apply_call(v, stemp); };
+};
+template<typename R, typename ...T>
+S1<R, T...> HS1(R(*F)(T...)) { return S1<R, T...>(F); };//一般函数
+#define HSlambda(a) HS1(LD(a))/*lambda表达式*/
+
+
+//有函数形参的函数1
+template<class F>
+void fmain(F f, int offset = 0) {
+	double x[] = { 10,20,30,100,90,80,77,65.4,31.1,26.4,37.5,17.5,82.2,90.2 };
+	printf("%.2lf\n", (double)f.apply(x + offset));
+	return;
+}
+
+//主函数
+int main() {
+	fmain(HSlambda([](double x1) ->double {return x1*x1; }), 3);
+	return 0;
+}
+
+为了减少内容的重复，只留了仿函数的示例
