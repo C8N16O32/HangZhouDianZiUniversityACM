@@ -1,0 +1,173 @@
+/*======================================================================   目录   ======================================================================*/
+1. 循环队列 template<class T> class QUEUE
+2. 双向循环链表 template<class T, typename K> class LIST
+3. 优先队列 template<class T, typename K> class PRIQUE  需要使用 (1) 与 (2)
+/*======================================================================   循环队列   ======================================================================*/
+//循环队列
+template<class T>
+class QUEUE {
+	//数据
+	T*v = NULL; int m_head = 0, m_end = 0, m_capacity = 0;
+	//调整幅度
+	int m_dc = 16, m_step = 16, m_shc = 0, m_dsh = 8;
+public:
+	//信息
+	bool isempty() { if (m_head == m_end)return 1; return 0; };
+	int size() { return m_end - m_head; };
+	void setdcstepshstep(int dc, int step, int dsh) { m_dc = dc; m_step = step; m_dsh = dsh; return; };
+	//调整大小
+	void changesize(int newcapacity) {
+		int s1 = m_head, l1 = size(), s2 = 0, l2 = 0;
+		if (m_end > m_capacity) { l2 = m_end - m_capacity; l1 -= l2; };
+		//printf("changesize:%d[%d,%d) to %d[%d,%d) s1 %d l1 %d s2 %d l2 %d\n", m_capacity, m_head, m_end, newcapacity, 0, l1 + l2, s1, l1, s2, l2);
+		T*temp = new T[newcapacity]; int i;
+		for (i = s1; i < s1 + l1; i++)temp[i - s1] = v[i];
+		for (i = s2; i < s2 + l2; i++)temp[i - s2 + l1] = v[i];
+		delete[]v; v = temp; temp = NULL;
+		m_head = 0; m_end = l1 + l2; m_capacity = newcapacity;
+		return;
+	};
+	void checkcapa(int ns/*需要的额外空间数*/) {
+		int size = QUEUE::size() + ns;
+		if (size <= m_dc)size = m_dc;
+		else size = ((size - m_dc - 1) / m_step + 1)*m_step + m_dc;
+		if (size > m_capacity) { changesize(size); m_shc = m_dsh; return; };
+		if (m_shc) { m_shc--; return; };
+		if (size < m_capacity)changesize(size);
+		return;
+	};
+	//入队/出队
+	void push_end(T&inp) {
+		checkcapa(1);
+		v[m_end%m_capacity] = inp; m_end++;
+		return;
+	};
+	T&head() {
+		return v[m_head];
+	};
+	void pop_head() {
+		m_head++;
+		if (m_head == m_capacity) {
+			m_head -= m_capacity; m_end -= m_capacity;
+		};
+		checkcapa(0);
+		return;
+	};
+	//构造/析构
+	virtual ~QUEUE<T>() {
+		delete[]v; v = NULL;
+	};
+};
+/*======================================================================   双向循环链表   ======================================================================*/
+//双向循环链表 (含有key)
+template<class T, typename K>
+class LIST {
+public:
+	struct N {
+		K key; T data;
+		N*next = NULL, *prev = NULL;
+	};
+private:
+	//数据
+	struct N *m_head = NULL;
+	int m_size = 0;
+public:
+	//信息
+	bool isempty() { if (m_size)return 0; return 1; };
+	int size() { return m_size; };
+	N*head() { return m_head; };
+	void sethead(N*newhead) {
+		if (m_head == NULL) {
+			m_size = 1;
+			newhead->next = newhead;
+			newhead->prev = newhead;
+		};
+		m_head = newhead;
+	};
+	//增查删
+	void insert(N *px, N *ppre = NULL) {
+		//首节点
+		if (ppre == NULL) {
+			m_head = px;
+			m_head->prev = m_head;
+			m_head->next = m_head;
+		}
+		//常规
+		else {
+			N *pnex = ppre->next;
+			px->prev = ppre; ppre->next = px;
+			px->next = pnex; pnex->prev = px;
+		};
+		m_size++;
+		return;
+	};
+	N*search(K key) {
+		if (isempty())return NULL;
+		N *cur = m_head;
+		for (int i = 0; i < m_size; i++) {
+			if (cur->key == key)return cur;
+			cur = cur->next;
+		};
+		return NULL;
+	};
+	void erase(N *px) {
+		//最后一个节点
+		if (m_size == 1) {
+			delete m_head; m_head = NULL;
+		}
+		else {
+			px->prev->next = px->next;
+			px->next->prev = px->prev;
+			if (px == m_head)m_head = px->next;
+			delete px; px = NULL;
+		};
+		m_size--;
+		return;
+	};
+	//构造/析构
+	virtual ~LIST() {
+		if (isempty())return;
+		while (m_head)erase(m_head);
+	};
+};
+/*======================================================================   优先队列   ======================================================================*/
+//优先队列 (队列链表实现)
+template<class T, typename K>
+class PRIQUE {
+public:
+	using Q = QUEUE<T>;
+	LIST<Q, int> list;
+	using N = typename LIST<Q, int>::N;
+	void push(T &data, int count) {
+		auto push_queue = [&](N*note, T &data) {note->data.push_end(data); };
+		auto push_list = [&](T &data, int key) {
+			N *temp = new N;
+			temp->data.push_end(data); temp->key = key;
+			if (list.isempty()) { list.sethead(temp); return; };
+			int size = list.size();
+			N *cur = list.head();
+			int i; for (i = 0; i < size; i++) {
+				if (key < cur->key)break;
+				cur = cur->next;
+			};
+			list.insert(temp, cur->prev);
+			if (i == 0 && cur == list.head())list.sethead(temp);
+		};
+
+		N*s = list.search(count);
+		if (s)push_queue(s, data);
+		else push_list(data, count);
+	};
+	bool isempty() {
+		if (list.isempty())return 1; return 0;
+	};
+	//请使用isempty()提前检查
+	T pop() {
+		T temp;
+		Q&q = list.head()->data;
+		temp = q.head(); q.pop_head();
+		if (q.isempty())list.erase(list.head());
+		return temp;
+	};
+};
+/*======================================================================   end   ======================================================================*/
