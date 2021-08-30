@@ -8,7 +8,7 @@ template<class T>
 class QUEUE {
 	//数据
 	T*v = NULL; int m_head = 0, m_end = 0, m_capacity = 0;
-	//调整幅度
+	//调整幅度(视情况增大默认空间)
 	int m_dc = 16, m_step = 16, m_shc = 0, m_dsh = 8;
 public:
 	//信息
