@@ -1,20 +1,20 @@
 /*======================================================================   目录   ======================================================================*/
-1. 循环队列 template<class T> class QUEUE
-2. 双向循环链表 template<class T, typename K> class LIST
-3. 优先队列 template<class T, typename K> class PRIQUE  需要使用 (1) 与 (2)
-/*======================================================================   循环队列   ======================================================================*/
+1. 循环队列/栈 template<class T> class QUEUE
+2. 双向循环链表(带有key) template<class T, typename K> class LIST
+3. 优先队列 template<class T, typename K> class PRIQUE  需要使用 (1) 与 (2)   将1的对象作为2的模板里的T
+/*======================================================================   循环队列/栈   ======================================================================*/
 //循环队列
 template<class T>
 class QUEUE {
 	//数据
 	T*v = NULL; int m_head = 0, m_end = 0, m_capacity = 0;
-	//调整幅度(视情况增大默认空间)
-	int m_dc = 16, m_step = 16, m_shc = 0, m_dsh = 8;
+	//调整幅度
+	int m_dc = 16, m_shc = 0, m_dsh = 8;
 public:
 	//信息
 	bool isempty() { if (m_head == m_end)return 1; return 0; };
 	int size() { return m_end - m_head; };
-	void setdcstepshstep(int dc, int step, int dsh) { m_dc = dc; m_step = step; m_dsh = dsh; return; };
+	void setdcstepshstep(int dc, int dsh) { m_dc = dc; m_dsh = dsh; return; };
 	//调整大小
 	void changesize(int newcapacity) {
 		int s1 = m_head, l1 = size(), s2 = 0, l2 = 0;
@@ -28,9 +28,8 @@ public:
 		return;
 	};
 	void checkcapa(int ns/*需要的额外空间数*/) {
-		int size = QUEUE::size() + ns;
-		if (size <= m_dc)size = m_dc;
-		else size = ((size - m_dc - 1) / m_step + 1)*m_step + m_dc;
+		int sizeold = QUEUE::size() + ns, size = m_dc;
+		while (sizeold > size)size *= 2;
 		if (size > m_capacity) { changesize(size); m_shc = m_dsh; return; };
 		if (m_shc) { m_shc--; return; };
 		if (size < m_capacity)changesize(size);
@@ -50,6 +49,14 @@ public:
 		if (m_head == m_capacity) {
 			m_head -= m_capacity; m_end -= m_capacity;
 		};
+		checkcapa(0);
+		return;
+	};
+	T&rhead() {
+		return v[(m_end - 1) % m_capacity];
+	};
+	void pop_end() {
+		m_end--;
 		checkcapa(0);
 		return;
 	};
