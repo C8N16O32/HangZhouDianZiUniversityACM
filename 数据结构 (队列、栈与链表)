@@ -3,14 +3,13 @@
 2. 双向循环链表(带有key) template<class T, typename K> class LIST
 3. 优先队列 template<class T, typename K> class PRIQUE  需要使用 (1) 与 (2)   将1的对象作为2的模板里的T
 /*======================================================================   循环队列/栈   ======================================================================*/
-//循环队列
 template<class T>
 class QUEUE {
-	//数据
-	T*v = NULL; int m_head = 0, m_end = 0, m_capacity = 0;
 	//调整幅度
 	int m_dc = 16, m_shc = 0, m_dsh = 8;
 public:
+	//数据
+	T*v = NULL; int m_head = 0, m_end = 0, m_capacity = 0;
 	//信息
 	bool isempty() { if (m_head == m_end)return 1; return 0; };
 	int size() { return m_end - m_head; };
@@ -41,6 +40,11 @@ public:
 		v[m_end%m_capacity] = inp; m_end++;
 		return;
 	};
+	void push_end_notref(T inp) {
+		checkcapa(1);
+		v[m_end%m_capacity] = inp; m_end++;
+		return;
+	};
 	T&head() {
 		return v[m_head];
 	};
@@ -60,6 +64,8 @@ public:
 		checkcapa(0);
 		return;
 	};
+	//清空
+	void reset() { delete[]v; v = NULL; m_head = 0; m_end = 0; m_capacity = 0; }
 	//构造/析构
 	virtual ~QUEUE<T>() {
 		delete[]v; v = NULL;
