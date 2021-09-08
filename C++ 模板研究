@@ -1,3 +1,58 @@
+/*****************************示例2***************************************/
+利用模板保留lambda表达式的捕获表 实现了for_each与for_each_ij 但它不仅能实现这个。
+
+//以下两个函数是 基类 template<typename T>class square{int m,n;T**v=NULL; **略** }; 的成员函数
+
+//	template<class T2, typename ...T3>
+//	void For_each_ij(T2 f, T3 ...args) {
+//		for (int i = 0; i < m; i++)
+//			for (int j = 0; j < n; j++)
+//				f(i, j, v, args...);
+//	}
+//
+//	template<class T2, typename ...T3>
+//	void For_each(T2 f, T3 ...args) {
+//		for (int i = 0; i < m; i++)
+//			for (int j = 0; j < n; j++)
+//				f(v[i][j], args...);
+//	}
+
+
+以下是for_each_ij使用前、使用后
+//以下是一个lambda表达式 是基类square的一个派生类的成员函数里的一个lambda表达式 成员函数的目的是将字符串输入转化为isfloor方阵与isend方阵
+//player是成员函数内定义的对象 保存player点阵 类型为square<bool>
+//map是成员函数形参对象 是字符串输入 类型为square<char> &map
+//本类继承于square<BOOL2> BOOL2含有isfloor与isend两个bool型变量
+[&]() {
+	auto isfloor = [&](int i0, int j0)->bool {
+	
+	//使用前
+		/*for (int i = 0; i < player.m; i++)
+		for (int j = 0; j < player.n; j++)
+		if (player.v[i][j] && map.v[i + i0][j + j0] == 'O')return 0;
+		return 1;*/
+	//使用后
+		int f = 1;
+		player.For_each_ij( [&](int i, int j, decltype(player.v) v, int &f) {
+			if (v[i][j] && map.v[i + i0][j + j0] == 'O')f = 0;
+		} , f);
+		return f;
+	};
+	//m,n,v均为本类的基类的变量
+	
+	//使用前
+	//for (int i = 0; i < m; i++)
+	//	for (int j = 0; j < n; j++)
+	
+	//使用后
+	For_each_ij( [&](int i, int j, decltype(v) v) {
+		if (isfloor(i, j))v[i][j].isfloor = 1; }
+	);
+}();
+
+//用于ACM题目4-2-8 擒杀对方四分卫问题 应用后仍然accepted
+
+/*****************************示例1***************************************/
 实际使用中 兼容lambda表达式的部分与apply方法可以选择性的省略
 
 //模板 函数LD：将lambda表达式降级为函数指针
