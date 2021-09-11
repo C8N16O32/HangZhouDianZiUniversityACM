@@ -2,12 +2,12 @@
 1. 循环队列/栈两用结构 template<class T> class QUEUE
 2. 双向循环链表(带有key) template<class T, typename K> class LIST
 3. 优先队列 template<class T, typename K> class PRIQUE  需要使用 (1) 与 (2)   将1的对象作为2的模板里的T
+4. 点与点阵基类
 
 BFS/DFS
 BFS使用队列，有时可以使用队列链表实现优先队列
 DFS有多种用法 通常使用栈，但是要在T里放回调标志与回调函数
-
-简陋：编写程序时需要注意 队列/栈的大小发生改变时 元素的引用或指向元素的指针会失效。应在失效前进行操作 或者在必要的时候重新获得引用或指向元素的指针
+简陋： 队列/栈的大小发生改变时 元素的引用或指向元素的指针会失效。应在失效前进行操作 或者在必要的时候重新获得引用或指向元素的指针
 /*======================================================================   循环队列/栈   ======================================================================*/
 template<class T>
 class QUEUE{
@@ -162,5 +162,22 @@ public:
 		if (q.isempty())list.erase(list.head());
 		return temp;
 	};
+};
+/*======================================================================   点与点阵基类   ======================================================================*/
+struct P { int i, j; bool operator==(const P&y) { if (y.i == i&&y.j == j)return 1; return 0; } };
+template<class T>
+struct square {
+	int m = 0, n = 0; T**v = NULL;
+	void New(int im, int in) { m = im; n = in; v = new T*[m]; for (int i = 0; i < m; i++)v[i] = new T[n]; }
+	void Del() { for (int i = 0; i < m; i++)delete[]v[i]; delete[]v; v = NULL; m = 0; n = 0; }
+	~square() { if (v != NULL)Del(); };
+	template<class F, class ...Ft>void For_each(F f, Ft ...args) { for (int i = 0; i < m; i++)for (int j = 0; j < n; j++)f(v[i][j], args...); }
+	template<class F, class ...Ft>void For_each_ij(F f, Ft ...args) { for (int i = 0; i < m; i++)for (int j = 0; j < n; j++)f(i, j, v[i][j], args...); }
+	void Reset(const T&valuedefault) { For_each([&](T &v) {v = valuedefault; }); }
+	//题目不会给出找不到起点或找不到终点的情况
+	void find(const T&valuetarget, P&f) { For_each_ij([&](int i, int j, T&v) {if (v == valuetarget) { f = { i,j }; return 1; } return 0; }); }
+	bool isinrect(const P&p) { int i = p.i, j = p.j; if (i < 0 || i >= m || j < 0 || j >= n)return 0; return 1; }
+	//仅支持相同大小的两个结构进行赋值运算
+	void operator=(const square&y) { if (v == NULL)New(y.m, y.n); For_each_ij([&](int i, int j, T&v) {v = y.v[i][j]; }); }
 };
 /*======================================================================   end   ======================================================================*/
