@@ -8,72 +8,46 @@ BFS使用队列，有时可以使用队列链表实现优先队列
 DFS有时可以使用栈链表 LIST<int, QUEUE<T>>
 /*======================================================================   循环队列/栈   ======================================================================*/
 template<class T>
-class QUEUE {
-	//调整幅度
-	int m_dc = 16, m_shc = 0, m_dsh = 8;
-public:
-	//数据
-	T*v = NULL; int m_head = 0, m_end = 0, m_capacity = 0;
-	//信息
-	bool isempty() { if (m_head == m_end)return 1; return 0; };
-	int size() { return m_end - m_head; };
-	void setdcstepshstep(int dc, int dsh) { m_dc = dc; m_dsh = dsh; return; };
-	//调整大小
-	void changesize(int newcapacity) {
-		int s1 = m_head, l1 = size(), s2 = 0, l2 = 0;
-		if (m_end > m_capacity) { l2 = m_end - m_capacity; l1 -= l2; };
-		//printf("changesize:%d[%d,%d) to %d[%d,%d) s1 %d l1 %d s2 %d l2 %d\n", m_capacity, m_head, m_end, newcapacity, 0, l1 + l2, s1, l1, s2, l2);
-		T*temp = new T[newcapacity]; int i;
-		for (i = s1; i < s1 + l1; i++)temp[i - s1] = v[i];
+class QUEUE{
+	int mhead = 0, mend = 0, mcapacity = 0; T*v = NULL;
+	bool isempty() { if (mend == mhead)return 1; return 0; }
+	int size() { return mend - mhead; }
+	int mcapadef = 16, mheat = 0, mheatdef = 8;
+	//动态数组
+	void changecapacity(int capanew) {
+		int s1 = mhead, l1 = size(), s2 = 0, l2 = 0;
+		if (mend > mcapacity) { l2 = mend - mcapacity; l1 = mcapacity - mhead; }
+		T*temp = new T[capanew]; int i;
+		for (i = s1; i < s1 + l1; i++)temp[i - s1] = v[i]; 
 		for (i = s2; i < s2 + l2; i++)temp[i - s2 + l1] = v[i];
 		delete[]v; v = temp; temp = NULL;
-		m_head = 0; m_end = l1 + l2; m_capacity = newcapacity;
-		return;
-	};
-	void checkcapa(int ns/*需要的额外空间数*/) {
-		int sizeold = QUEUE::size() + ns, size = m_dc;
-		while (sizeold > size)size *= 2;
-		if (size > m_capacity) { changesize(size); m_shc = m_dsh; return; };
-		if (m_shc) { m_shc--; return; };
-		if (size < m_capacity)changesize(size);
-		return;
-	};
-	//入队/出队
-	void push_end(T&inp) {
-		checkcapa(1);
-		v[m_end%m_capacity] = inp; m_end++;
-		return;
-	};
-	void push_end_notref(T inp) {
-		checkcapa(1);
-		v[m_end%m_capacity] = inp; m_end++;
-		return;
-	};
-	T&head() {
-		return v[m_head];
-	};
-	void pop_head() {
-		m_head++;
-		if (m_head == m_capacity) {
-			m_head -= m_capacity; m_end -= m_capacity;
-		};
-		checkcapa(0);
-		return;
-	};
-	T&rhead() {
-		return v[(m_end - 1) % m_capacity];
-	};
-	void pop_end() {
-		m_end--;
-		checkcapa(0);
-		return;
-	};
-	//清空
-	void reset() { delete[]v; v = NULL; m_head = 0; m_end = 0; m_capacity = 0; }
+		mhead = 0; mend = l1 + l2; mcapacity = capanew;
+	}
+	void checkcapacity(int needone) {
+		int capaneed = needone + size(), capanew = mcapadef;
+		while (capanew < capaneed)capanew *= 2;
+		if (capanew > mcapacity) { changecapacity(capanew); mheat = mheatdef; return; }
+		if (mheat > 0) { mheat--; return; }
+		if (capanew < mcapacity) { changecapacity(capanew); mheat = mheatdef; return; }
+	}
+	//输入输出
+	void push_end(const T&x) { checkcapacity(1); v[mend%mcapacity] = x; mend++; }
+	//以下四个执行前必须检查isempty
+	T&head() { return v[mhead]; }
+	T&rhead() { return v[(mend - 1) % mcapacity]; }
+	void pop_head() { mhead++; if (mhead == mcapacity) { 
+		mhead = 0; mend -= mcapacity; }checkcapacity(0); }
+	void pop_end() { mend--; checkcapacity(0); }
 	//构造/析构
-	virtual ~QUEUE<T>() {
-		delete[]v; v = NULL;
-	};
+	void Reset() { delete[]v; v = NULL; mhead = 0; mend = 0; mcapacity = 0; }
+	~queue() { if (v != NULL)Reset(); };
+	void operator=(const queue<T>&y) { 
+		Reset(); mcapadef = y.mcapadef; mheat = 0; mheatdef = y.mheatdef; 
+		if (!y.isempty()) {
+			v = new T[y.mcapacity]; mcapacity = y.mcapacity; for (int i = y.mhead; i < y.mend; i++)
+				v[i%mcapacity] = y.v[i%mcapacity]; mhead = y.mhead; mend = y.mend; 
+		} 
+	}
 };
 /*======================================================================   双向循环链表   ======================================================================*/
 //双向循环链表 (含有key)
