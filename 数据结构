@@ -1,8 +1,139 @@
 /*======================================================================   目录   ======================================================================*/
+5. hashmap 用于并查集
+6. skiplist 用于并查集与查找题目
 1. 循环队列/栈两用结构 template<class T> class QUEUE
 2. 双向循环链表(带有key) template<class T, typename K> class LIST
 3. 优先队列 template<class T, typename K> class PRIQUE  需要使用 (1) 与 (2)   将1的对象作为2的模板里的T
 4. 点与点阵基类
+
+/*======================================================================   hashmap   ======================================================================*/
+//hashmap 缺少删除操作
+template<int Pow, class T=int>
+struct Hashmapc {
+	static const int pow = Pow, max = 1 << pow, b2 = max / 10 / 2 * 2 + 1;
+	int hmain[max], hnext[max]; T v[max];
+	void reset() { for (int i = 0; i < max; i++) { hmain[i] = -1; hnext[i] = -1; } }
+	int hash(int n) { return n % max; }//标注inline反而变慢，改成按位与没有效果
+	int hash2(int h1, int c) { return (h1 + c*b2) % max; }
+	//查
+	int hpre;
+	void find_impl(int k0) {
+		hpre = -1; int h1 = hash(k0), h2 = h1;
+		while (hmain[h2] != k0&&hnext[h2] != -1) {
+			h2 = hnext[h2];
+		}
+		hpre = h2;
+	}
+	bool isitexist(int k0) {
+		find_impl(k0);
+		if (hmain[hpre] == k0)return 1;
+		else return 0;
+	}
+	T& getit() { return v[hpre]; }
+	T& pushit(int k0, const T&t) {
+		int c = 1; while (hmain[hash2(hpre, c)] != -1)c++;
+		int h2 = hash2(hpre, c);
+		hnext[hpre] = h2;
+		hmain[h2] = k0;
+		v[h2] = t;
+		return v[h2];
+	}
+	//缺少删除功能，但一般用不到
+};
+/*======================================================================   skiplist   ======================================================================*/
+//skiplist
+template<class K = int, class T = int>
+class Slist {
+	//节点最大高度
+	static const char pmax = 12;
+	//排序模式
+	int sortmode = 0; //默认升序: smode=0
+public:
+	void setsortmode(int smode) { sortmode = smode; }
+private:
+	//均匀数发生器
+	int rmax = 1 << pmax, ra = 0, rb = rmax / 10 / 2 * 2 + 1;
+	int rrand() { ra = (ra + rb) % rmax; return ra; }
+	int nrand() {
+		int c = pmax, r = rrand(), k = r % 2;
+		while (c > 1 && r > 1) { r >>= 1; c--; }
+		if (c == pmax&&r)c = 1;
+		return c;
+	};
+	//数据节点
+	struct Note {
+		const char plen; Note**p = NULL;
+		K k; T t;
+		Note(char plen0) :plen(plen0) { p = new N*[plen](); };
+		~Note() { delete[] p; }
+	}*head = NULL, *tail = NULL;
+	int msize = 0; using N = Note;
+public:
+	//基本操作
+	bool isempty() { if (msize)return 1; return 0; }
+	int size() { return msize; }
+	void set() {
+		//建立首尾节点
+		head = new N(pmax); tail = new N(pmax);
+		for (int i = 0; i < head->plen; i++)head->p[i] = tail;
+		msize = 0;
+	}
+	void reset() {
+		//清除中间节点
+		if (msize) {
+			N*cur = head->p[0], *temp = NULL;
+			while (cur != tail) {
+				temp = cur->p[0]; delete cur; cur = temp;
+			}
+		}
+		//重置首尾节点
+		for (int i = 0; i < head->plen; i++)head->p[i] = tail;
+		msize = 0;
+	};
+protected:
+	//构造/析构
+	Slist() { set(); };
+	~Slist() { reset(); delete head; delete tail; };
+private:
+	//比较
+	bool cmp(const K&knext, const K&k) {
+		if (sortmode == 0) { if (knext >= k)return 0; }
+		else { if (knext <= k)return 0; }
+		return 1;
+	};
+	//查找
+	N* pleft[pmax] = {}; //中间结果
+	void find_impl(const K&k) {
+		N*cur = head; int i = pmax - 1;
+		while (i >= 0) {
+			while (cur->p[i] != tail&&cmp(cur->p[i]->k, k)) { cur = cur->p[i]; }//向右查找
+			pleft[i] = cur; i--;//向下
+		}
+	}
+	//根据查找结果 插入节点 删除节点
+	void push_impl(N*n) {
+		msize++;
+		for (int i = 0; i < n->plen; i++) { n->p[i] = pleft[i]->p[i]; pleft[i]->p[i] = n; };
+	}
+	void erase_impl() {
+		msize--; N*n = pleft[0]->p[0];
+		for (int i = 0; i < n->plen; i++) pleft[i]->p[i] = n->p[i]; delete n;
+	}
+public:
+	//先查找 过程中更新“中间结果” 然后依靠中间结果执行其他操作
+	bool isitexist(const K&k) { 
+		find_impl(k);
+		if (pleft[0]->p[0] == tail)return 0;
+		return pleft[0]->p[0]->k == k;
+	}
+	T& getit() { return pleft[0]->p[0]->t; }
+	void eraseit() { erase_impl(); }
+	T& pushit(const K&k, const T&t) {
+		N*cur = new N(nrand()); cur->k = k; cur->t = t;
+		push_impl(cur); return cur->t;
+	}
+	//暂时无视不先查找的情况
+};
 
 BFS/DFS
 BFS使用队列，有时可以使用队列链表实现优先队列
