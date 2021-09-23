@@ -1,6 +1,6 @@
 /*======================================================================   目录   ======================================================================*/
-5. hashmap 用于并查集
-6. skiplist 用于并查集与查找题目
+5. hashmap template<int Pow, class T=int> struct Hashmapc
+6. skiplist用于查找 template<class K = int, class T = int> class Slist
 1. 循环队列/栈两用结构 template<class T> class QUEUE
 2. 双向循环链表(带有key) template<class T, typename K> class LIST
 3. 优先队列 template<class T, typename K> class PRIQUE  需要使用 (1) 与 (2)   将1的对象作为2的模板里的T
