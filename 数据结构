@@ -187,7 +187,7 @@ public:
 	//改增 常规
 	T& push(const K&k, const T&t) {
 		find_impl(k);
-		return push_impl(k, t);
+		return pushit(k, t);
 	}
 	T& get(const K&k) {
 		find_impl(k);
