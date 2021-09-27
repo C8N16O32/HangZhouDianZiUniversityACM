@@ -26,6 +26,19 @@ struct Hashmapd {
 	int hash2(int n) { return n; }
 
 	int hnext(int h1) { return (h1 + b2) % max; }//双散列函数探查法
+	
+	//BKDRHash 需要的时候可以用上
+	unsigned int BKDRHash(char *str)//Hash算法
+	{
+		unsigned int seed = 131;
+		unsigned int hash = 0;
+	
+		while (*str)
+		{
+			hash = hash * seed + (*str++);
+		}
+		return (hash & 0x7FFFFFFF);
+	}
 
 	//查改增 首先使用find_impl 然后选择相应的函数执行操作
 	int h1, h2; //find_impl的关键变量
