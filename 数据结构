@@ -157,7 +157,7 @@ public:
 	//遍历模板
 	template<class F2, class ...T2>
 	void foreachk(F2 f, T2 ...args) {
-		N*cur = head;
+		N*cur = head->p[0];
 		while (cur != tail) {
 			f(cur->k, args...);
 			cur = cur->p[0];
@@ -165,7 +165,7 @@ public:
 	}
 	template<class F2, class ...T2>
 	void foreacht(F2 f, T2 ...args) {
-		N*cur = head;
+		N*cur = head->p[0];
 		while (cur != tail) {
 			f(cur->t, args...);
 			cur = cur->p[0];
