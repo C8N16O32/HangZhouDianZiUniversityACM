@@ -72,7 +72,7 @@ struct Hashmapd {
 template<class K = int, class T = int>
 class Slist {
 	//节点最大高度
-	static const char pmax = 12;
+	static const char pmax = 16; //在5.2.4魔咒词典测得的最佳值
 	//排序模式
 	int sortmode = 0; //默认升序: smode=0
 public:
