@@ -7,7 +7,7 @@
 4. 点与点阵基类
 
 /*======================================================================   hashmap   ======================================================================*/
-//hashmap 缺少删除操作
+//开放地址法hashmap 未存储原始值
 
 template<int Pow, class K = int, class T = int>
 struct Hashmapd {
@@ -20,8 +20,21 @@ struct Hashmapd {
 	void reset() { for (int i = 0; i < max; i++)H[i] = -1; }
 
 	//hash 暂时写死 需要的时候再改  hash作为下标 hash2作为H填入的值
-	int hash(const string&s) { int len = s.length(); long long re = 1; for (int i = 0; i < len; i++)re = (re*b1 + s[i]) % max; return re; }
-	int hash2(const string&s) { int len = s.length(); long long re = 1; for (int i = 0; i < len; i++)re = (re*b2 + s[i]) % 2100000000; return re; }
+	int hash0(const string&s) { 
+		int len = s.length(); const char *c = s.c_str();
+		unsigned long long re = 1; 
+		while (*c) 
+		{
+			re = re * 131 + (*c++);
+		}
+		return re & 0x7FFFFFFF;
+	}
+	int hash(const string&s) {
+		return hash0(s) % max;
+	}
+	int hash2(const string&s) {
+		return hash0(s);
+	}
 	int hash(int n) { return n % max; }//细节：inline反而变慢，与max-1进行^运算没有显著效果
 	int hash2(int n) { return n; }
 
