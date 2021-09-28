@@ -7,7 +7,7 @@
 4. 点与点阵基类
 
 /*======================================================================   hashmap   ======================================================================*/
-//开放地址法hashmap 未存储原始值
+//开放地址法hashmap 未存储原始值 拉链法hashmap更好
 
 template<int Pow, class K = int, class T = int>
 struct Hashmapd {
@@ -85,7 +85,7 @@ struct Hashmapd {
 template<class K = int, class T = int>
 class Slist {
 	//节点最大高度
-	static const char pmax = 16; //在5.2.4魔咒词典测得的最佳值
+	static const char pmax = 16;
 	//排序模式
 	int sortmode = 0; //默认升序: smode=0
 public:
@@ -107,18 +107,22 @@ private:
 		K k; T t;
 		Note(char plen0) :plen(plen0) { p = new N*[plen](); };
 		~Note() { delete[] p; }
-	}*head = NULL, *tail = NULL;
+	}*head = NULL, *tail = NULL, *rhead = NULL;
 	int msize = 0; using N = Note;
 public:
 	//基本操作
-	bool isempty() { if (msize)return 1; return 0; }
+	bool isempty() { if (msize)return 0; return 1; }
 	int size() { return msize; }
+	N* gethead() { return head; }
+	N* getrhead() { return rhead; }
 	N* gettail() { return tail; }
+	N* getrtail() { return head->p[0]; } //堆顶为rtail
 	void set() {
 		//建立首尾节点
 		head = new N(pmax); tail = new N(pmax);
 		for (int i = 0; i < head->plen; i++)head->p[i] = tail;
 		msize = 0;
+		rhead = head;
 	}
 	void reset() {
 		//清除中间节点
@@ -131,6 +135,7 @@ public:
 		//重置首尾节点
 		for (int i = 0; i < head->plen; i++)head->p[i] = tail;
 		msize = 0;
+		rhead = head;
 	};
 
 	//构造/析构
@@ -162,10 +167,12 @@ private:
 	void push_impl(N*n) {
 		msize++;
 		for (int i = 0; i < n->plen; i++) { n->p[i] = pleft[i]->p[i]; pleft[i]->p[i] = n; };
+		if (n->p[0] = tail)rhead = n;
 	}
 	void erase_impl() {
 		msize--; N*n = pleft[0]->p[0];
 		for (int i = 0; i < n->plen; i++) pleft[i]->p[i] = n->p[i]; delete n;
+		if (pleft[0]->p[0] == tail)rhead = pleft[0]->p[0];
 	}
 public:
 	//查改增删_必须先查 一般用于重载[]运算符
@@ -255,7 +262,7 @@ class QUEUE{
 		} 
 	}
 };
-/*======================================================================   双向循环链表   ======================================================================*/
+/*======================================================================   双向循环链表（已被skiplist代替）   ======================================================================*/
 //双向循环链表 (含有key)
 template<class T, typename K>
 class LIST {
@@ -327,7 +334,7 @@ public:
 		while (m_head)erase(m_head);
 	};
 };
-/*======================================================================   优先队列   ======================================================================*/
+/*======================================================================   优先队列（已被skiplist代替）   ======================================================================*/
 //优先队列 (队列链表实现)
 template<class T, typename K>
 class PRIQUE {
