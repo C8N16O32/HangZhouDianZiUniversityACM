@@ -116,7 +116,7 @@ public:
 	N* gethead() { return head; }
 	N* getrhead() { return rhead; }
 	N* gettail() { return tail; }
-	N* getrtail() { return head->p[0]; } //堆顶为rtail
+	N* getrtail() { return head->p[0]; }
 	void set() {
 		//建立首尾节点
 		head = new N(pmax); tail = new N(pmax);
@@ -204,14 +204,18 @@ public:
 			cur = cur->p[0];
 		}
 	}
-	//改增 常规
+	//改增删 常规
+	T& get(const K&k) {
+		find_impl(k);
+		return getit();
+	}
 	T& push(const K&k, const T&t) {
 		find_impl(k);
 		return pushit(k, t);
 	}
-	T& get(const K&k) {
+	void erase(const K&k) {
 		find_impl(k);
-		return getit();
+		eraseit();
 	}
 };
 
