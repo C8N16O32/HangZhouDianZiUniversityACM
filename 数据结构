@@ -1,223 +1,132 @@
 /*======================================================================   目录   ======================================================================*/
-5. hashmap template<int Pow, class T=int> struct Hashmapc
-6. skiplist用于查找 template<class K = int, class T = int> class Slist
+5. hashmap
+6. skiplist用于多种用途 template<class K = int, class T = int> class Slist
 1. 循环队列/栈两用结构 template<class T> class QUEUE
 2. 双向循环链表(带有key) template<class T, typename K> class LIST
 3. 优先队列 template<class T, typename K> class PRIQUE  需要使用 (1) 与 (2)   将1的对象作为2的模板里的T
 4. 点与点阵基类
 
 /*======================================================================   hashmap   ======================================================================*/
-//开放地址法hashmap 未存储原始值 拉链法hashmap更好
-
-template<int Pow, class K = int, class T = int>
-struct Hashmapd {
-
-	//双散列函数+开放地址法
-	static const int pow = Pow, max = 1 << pow //max为2的幂 或者2的幂*1.5 使得系数b1 b2可以简单的取到
-		, b1 = max / 7 / 6 * 6 + 1
-		, b2 = max / 10 / 6 * 6 + 1;//b1 b2为hash的系数 b2同时还是向后查找的跨度
-	int H[max] = {}; T V[max];
-	void reset() { for (int i = 0; i < max; i++)H[i] = -1; }
-
-	//hash 暂时写死 需要的时候再改  hash作为下标 hash2作为H填入的值
-	int hash0(const string&s) { 
-		int len = s.length(); const char *c = s.c_str();
-		unsigned long long re = 1; 
-		while (*c) 
-		{
-			re = re * 131 + (*c++);
-		}
-		return re & 0x7FFFFFFF;
-	}
-	int hash(const string&s) {
-		return hash0(s) % max;
-	}
-	int hash2(const string&s) {
-		return hash0(s);
-	}
-	int hash(int n) { return n % max; }//细节：inline反而变慢，与max-1进行^运算没有显著效果
-	int hash2(int n) { return n; }
-
-	int hnext(int h1) { return (h1 + b2) % max; }//双散列函数探查法
-	
-	//BKDRHash 需要的时候可以用上
-	unsigned int BKDRHash(char *str)//Hash算法
-	{
-		unsigned int seed = 131;
-		unsigned int hash = 0;
-	
-		while (*str)
-		{
-			hash = hash * seed + (*str++);
-		}
-		return (hash & 0x7FFFFFFF);
-	}
-
-	//查改增 首先使用find_impl 然后选择相应的函数执行操作
-	int h1, h2; //find_impl的关键变量
-	int find_impl(const K&k0) {
-		h1 = hash(k0); h2 = hash2(k0);
-		while (H[h1] != h2&&H[h1] != -1)h1 = hnext(h1);
-		return h1;
-	}
-	bool isitexist(const K&k0) {
-		find_impl(k0); if (H[h1] == h2)return 1;
-		else return 0;
-	}
-	T& getit() { return V[h1]; }
-	T& pushit(const T&t) {
-		H[h1] = h2;
-		V[h1] = t;
-		return V[h1];
-	}
-	//改增 常规
-	T& push(const K&k, const T&t) {
-		find_impl(k);
-		return pushit(t);
-	}
-	T& get(const K&k) {
-		find_impl(k);
-		return getit();
-	}
-};
+//开放地址法hashmap太简单了 等拉链法hashmap写好放拉链法的
 /*======================================================================   skiplist   ======================================================================*/
-//Skiplist
-template<class K = int, class T = int>
-class Slist {
-	//节点最大高度
-	static const char pmax = 16;
-	//排序模式
-	int sortmode = 0; //默认升序: smode=0
-public:
-	void setsortmode(int smode) { sortmode = smode; }
-private:
-	//均匀数发生器
-	int rmax = 1 << pmax, ra = 0, rb = rmax / 10 / 2 * 2 + 1;
-	int rrand() { ra = (ra + rb) % rmax; return ra; }
-	int nrand() {
-		int c = pmax, r = rrand(), k = r % 2;
-		while (c > 1 && r > 1) { r >>= 1; c--; }
-		if (c == pmax&&r)c = 1;
-		return c;
-	};
-
-	//数据节点
-	struct Note {
-		const char plen; Note**p = NULL;
-		K k; T t;
-		Note(char plen0) :plen(plen0) { p = new N*[plen](); };
-		~Note() { delete[] p; }
-	}*head = NULL, *tail = NULL, *rhead = NULL;
-	int msize = 0; using N = Note;
-public:
-	//基本操作
-	bool isempty() { if (msize)return 0; return 1; }
-	int size() { return msize; }
-	N* gethead() { return head; }
-	N* getrhead() { return rhead; }
-	N* gettail() { return tail; }
-	N* getrtail() { return head->p[0]; }
-	void set() {
-		//建立首尾节点
-		head = new N(pmax); tail = new N(pmax);
-		for (int i = 0; i < head->plen; i++)head->p[i] = tail;
-		msize = 0;
-		rhead = head;
-	}
-	void reset() {
-		//清除中间节点
-		if (msize) {
-			N*cur = head->p[0], *temp = NULL;
-			while (cur != tail) {
-				temp = cur->p[0]; delete cur; cur = temp;
-			}
-		}
-		//重置首尾节点
-		for (int i = 0; i < head->plen; i++)head->p[i] = tail;
-		msize = 0;
-		rhead = head;
-	};
-
-	//构造/析构
-	Slist() { set(); };
-	~Slist() { reset(); delete head; delete tail; };
-private:
+//skiplist
+template<class K, class V>
+struct Slist{
+	static const int pmax=16;
+	//节点
+	struct N {
+		const int plen; N**p;
+		K k; V v;
+		N(int p0) :plen(p0) { p = new N*[plen]; for (int i = 0; i < plen; i++)p[i] = NULL; };
+		~N() { delete[]p; };
+	}*head, *tail;
+	N* gethead() { return head; } N* gettail() { return head; }
+	N* getrtail() { return head->p[0]; }//需要注意 这里的head节点与tail节点都是不保存数据的。实际使用中要getrtail和getrhead
 	//比较
-	bool cmp(const K&knext, const K&k) {
-		if (sortmode == 0) { if (knext >= k)return 0; }
-		else { if (knext <= k)return 0; }
-		return 1;
-	};
-
-	//查改增删_内部实现
-	N* pleft[pmax] = {}; //中间结果
-public:
-	N* find_impl(const K&k) {
-		N*cur = head; int i = pmax - 1;
-		while (i >= 0) {
-			while (cur->p[i] != tail&&cmp(cur->p[i]->k, k)) { 
-				cur = cur->p[i]; 
-			}//向右查找
-			pleft[i] = cur; i--;//向下
+	int cmpmode = 0; void setcmpmode(int mode) { cmpmode = mode; }
+	bool cmp(const K&temp, const K&k) {
+		if (cmpmode == 0) {
+			if (temp >= k)return 0; return 1;
 		}
-		return pleft[0];
+		else {
+			if (temp <= k)return 0; return 1;
+		}
 	}
-private:
-	//根据查找结果 插入节点 删除节点
-	void push_impl(N*n) {
+	//查
+	N*pleft[pmax];
+	N* find_impl(const K&k) {
+		int i = pmax - 1; N*cur = head;
+		while (i >= 0) {
+			while (cur->p[i] != tail&&cmp(cur->p[i]->k, k))
+				cur = cur->p[i];
+			pleft[i] = cur; i--;
+		}
+		return cur;
+	}
+	//增删
+	int msize = 0; N*rhead;
+	bool isempty() { if (msize == 0)return 1; return 0; }
+	int size() { return msize; }
+	N* getrhead() { return rhead; } //需要注意 这里的head节点与tail节点都是不保存数据的。实际使用中要getrtail和getrhead
+	N* push_impl(N*n) {
 		msize++;
-		for (int i = 0; i < n->plen; i++) { n->p[i] = pleft[i]->p[i]; pleft[i]->p[i] = n; };
+		for (int i = 0; i < n->plen; i++) {
+			n->p[i] = pleft[i]->p[i];
+			pleft[i]->p[i] = n;
+		}
 		if (n->p[0] == tail)rhead = n;
+		return n;
 	}
 	void erase_impl() {
-		msize--; N*n = pleft[0]->p[0];
-		for (int i = 0; i < n->plen; i++) pleft[i]->p[i] = n->p[i]; delete n;
-		if (pleft[0]->p[0] == tail)rhead = pleft[0]->p[0];
+		msize--;
+		N*n = pleft[0]->p[0];
+		for (int i = 0; i < n->plen; i++)
+			pleft[i]->p[i] = n->p[i];
+		delete n;
+		if (pleft[0]->p[0] == tail)rhead = pleft[0];
 	}
-public:
-	//查改增删_必须先查 一般用于重载[]运算符
+	//初始化
+	void set() {
+		head = new N(pmax); tail = new N(pmax); rhead = tail;
+		for (int i = 0; i < pmax; i++) { head->p[i] = tail; pleft[i] = head; }
+		msize = 0;
+	}
+	void reset() {
+		N*cur;
+		while (head->p[0] != tail) {
+			cur = head; head = head->p[0]; delete cur;
+		}
+		delete head; delete tail;
+		set();
+	}
+	Slist() { set(); }
+	~Slist() {
+		N*cur;
+		while (head->p[0] != tail) {
+			cur = head; head = head->p[0]; delete cur;
+		}
+		delete head; delete tail;
+	}
+	//线性散列
+	int max = 1 << pmax, ma = 0, mb = max / 7 / 6 * 6 + 1;
+	int rrand() { return ma = (ma + mb) % max; }
+	int prand() {
+		int p = pmax, r = rrand();
+		while (p > 1 && r) { r >>= 1; p--; }
+		if (p == pmax&&r)return 1;
+		return p;
+	}
+	//封装A
 	bool isitexist(const K&k) {
-		find_impl(k);
-		if (pleft[0]->p[0] == tail)return 0;
-		return pleft[0]->p[0]->k == k;
+		N*cur = find_impl(k)->p[0];
+		if (cur != tail&&cur->k == k)return 1;
+		return 0;
 	}
-	T& getit() { return pleft[0]->p[0]->t; }
-	T& pushit(const K&k, const T&t) {
-		N*cur = new N(nrand()); cur->k = k; cur->t = t;
-		push_impl(cur); return cur->t;
+	V&getit() { return pleft[0]->p[0]->v; }
+	V&pushit(const K&k, const V&v) {
+		N*cur = new N(prand());
+		cur->k = k; cur->v = v;
+		push_impl(cur);
+		return cur->v;
 	}
 	void eraseit() { erase_impl(); }
+	//封装B
+	V&get(const K&k) { find_impl(k); return getit(); }
+	V&push(const K&k, const V&v) { find_impl(k); return pushit(k, v); }
+	void erase(const K&k) { find_impl(k); eraseit(); }
 	//遍历模板
-	template<class F2, class ...T2>
-	void foreachk(F2 f, T2 ...args) {
-		N*cur = head->p[0];
-		while (cur != tail) {
+	template<class F,class ...FR>
+	void foreachKey(F f, FR ...args) {
+		for (N*cur = head->p[0]; cur != tail; cur = cur->p[0])
 			f(cur->k, args...);
-			cur = cur->p[0];
-		}
 	}
-	template<class F2, class ...T2>
-	void foreacht(F2 f, T2 ...args) {
-		N*cur = head->p[0];
-		while (cur != tail) {
-			f(cur->t, args...);
-			cur = cur->p[0];
-		}
-	}
-	//改增删 常规
-	T& get(const K&k) {
-		find_impl(k);
-		return getit();
-	}
-	T& push(const K&k, const T&t) {
-		find_impl(k);
-		return pushit(k, t);
-	}
-	void erase(const K&k) {
-		find_impl(k);
-		eraseit();
+	template<class F, class ...FR>
+	void foreachValue(F f, FR ...args) {
+		for (N*cur = head->p[0]; cur != tail; cur = cur->p[0])
+			f(cur->v, args...);
 	}
 };
+
 
 BFS/DFS
 BFS使用队列，有时可以使用队列链表实现优先队列
