@@ -20,7 +20,7 @@ struct Slist{
 		N(int p0) :plen(p0) { p = new N*[plen]; for (int i = 0; i < plen; i++)p[i] = NULL; };
 		~N() { delete[]p; };
 	}*head, *tail;
-	N* gethead() { return head; } N* gettail() { return head; }
+	N* gethead() { return head; } N* gettail() { return tail; }
 	N* getrtail() { return head->p[0]; }//需要注意 这里的head节点与tail节点都是不保存数据的。实际使用中要getrtail和getrhead
 	//比较
 	int cmpmode = 0; void setcmpmode(int mode) { cmpmode = mode; }
