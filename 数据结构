@@ -1,0 +1,282 @@
+//并查集有很多变式 这是最基础的并查集
+struct FU {
+	static const int N = 10000;
+	int f[N];
+	FU() { for (int i = 0; i<N; i++)f[i] = i; };
+	int F(int n) {
+		int r = n;
+		while (f[r] != r)r = f[r];
+		int t;
+		while (f[n] != r) { t = f[n]; f[n] = r; n = t; }
+		return r;
+	}
+	void U(int n1, int n2) {
+		int r1 = F(n1), r2 = F(n2);
+		f[n2] = n1;
+	}
+};
+
+//拉链法hashmap
+template<class T>
+struct HM {
+	static const int N2 = 10000;
+	int HL[N2 * 2] = {}, H[N2 * 2] = {}, capa = N2 + 1;
+	T K[N2 * 2] = {};
+	//A 使用类似并查集的技巧 1~N2为Hash()的值域 N2+1~2N2-1为拉链区域 capa是最新可用下标
+	//B 将0定义为空 而不是-1定义为空
+	//C HL存储查询链下标 H存储value完整整 这里表示链表节点的下标 K存储key完整值
+	int Hash(T key) { if (key<0)key = -key; return key%N2 + 1; };//要根据不同的T进行重载
+	int find_impl(T key) {
+		int re = Hash(key);
+		while (HL[re] && K[re] != key && H[re] != 0)
+			re = HL[re];
+		re0 = re;
+		return re;//返回内部下标
+	}
+	int re0;
+	void updateit(T key, int value) {
+		int re = re0;//find_impl(key);
+		if (K[re] != key && H[re] != 0) {
+			HL[re] = capa; re = capa++; K[re] = key;
+		}//拉链
+		K[re] = key; H[re] = value;
+	}
+	int getit(T key) {
+		int re = re0;//find_impl(key);
+		if (K[re] != key)return 0;
+		return H[re]; //返回的value是链表节点的下标
+	}
+	void update(T key, int value) {
+		int re = find_impl(key);
+		if (K[re] != key && H[re] != 0) {
+			HL[re] = capa; re = capa++; K[re] = key;
+		}//拉链
+		H[re] = value;
+	}
+	int get(T key) {
+		int re = find_impl(key);
+		if (K[re] != key)return 0;
+		return H[re]; //返回的value是链表节点的下标
+	}
+};
+
+//双向链表
+struct L {
+	const static int N = 100002;
+	const int head = 1, tail = 2; //N 大于最大可能节点数
+	int pre[N] = { 0,0,1 }, nxt[N] = { 0,2,0 }, len = 0, capa = 3; //链表节点 0定义为空 capa是最新可用下标
+	int key[N] = {}, value[N] = {}; //节点存储的值
+									//记录被删掉的节点的下标 新的节点优先从此处获取空间 无了再从capa获取
+	int st[N] = {}, sth = 0;
+	int mll() { if (sth == 0)return capa++; return st[--sth]; }
+	void dll(int i) { st[sth++] = i; }
+	//在表首插入 返回i
+	int push_head(int key, int value) {
+		int i = mll(), ipre = head, inxt = nxt[head];
+		nxt[ipre] = i; pre[inxt] = i;
+		nxt[i] = inxt; pre[i] = ipre;
+		L::key[i] = key; L::value[i] = value;
+		len++;
+		return i;
+	}
+	//移除表尾 返回key
+	int erase_rhead() {
+		int i = pre[tail];
+		pre[tail] = pre[i];
+		nxt[pre[i]] = tail;
+		len--; dll(i);
+		return key[i];
+	}
+	//主动删除节点 返回key
+	int erase(int I) {
+		pre[nxt[I]] = pre[I];
+		nxt[pre[I]] = nxt[I];
+		len--; dll(I);
+		return key[I];
+	}
+};
+
+//skiplist 轻量级的map
+template<class K = int, class T = int>
+class Slist {
+	//节点最大高度
+	static const char pmax = 16;
+	//排序模式
+	int sortmode = 0; //默认升序: smode=0
+public:
+	void setsortmode(int smode) { sortmode = smode; }
+private:
+	//均匀数发生器
+	int rmax = 1 << pmax, ra = 0, rb = rmax / 10 / 2 * 2 + 1;
+	int rrand() { ra = (ra + rb) % rmax; return ra; }
+	int nrand() {
+		int c = pmax, r = rrand();
+		while (c > 1 && r > 1) { r >>= 1; c--; }
+		if (c == pmax&&r)c = 1;
+		return c;
+	};
+public:
+	//数据节点
+	struct Note {
+		const char plen; Note**p = NULL;
+		K k; T t;
+		Note(char plen0) :plen(plen0) { p = new N*[plen](); };
+		~Note() { delete[] p; }
+	}*head = NULL, *tail = NULL, *rhead = NULL;
+	int msize = 0; using N = Note;
+public:
+	//基本操作
+	bool isempty() { if (msize)return 0; return 1; }
+	int size() { return msize; }
+	N* gethead() { return head; }
+	N* getrhead() { return rhead; }
+	N* gettail() { return tail; }
+	N* getrtail() { return head->p[0]; }
+	void set() {
+		//建立首尾节点
+		head = new N(pmax); tail = new N(pmax);
+		for (int i = 0; i < head->plen; i++)head->p[i] = tail;
+		msize = 0;
+		rhead = head;
+	}
+	void reset() {
+		//清除中间节点
+		if (msize) {
+			N*cur = head->p[0], *temp = NULL;
+			while (cur != tail) {
+				temp = cur->p[0]; delete cur; cur = temp;
+			}
+		}
+		//重置首尾节点
+		for (int i = 0; i < head->plen; i++)head->p[i] = tail;
+		msize = 0;
+		rhead = head;
+	};
+
+	//构造/析构
+	Slist() { set(); };
+	~Slist() { reset(); delete head; delete tail; };
+private:
+	//比较
+	bool cmp(const K&knext, const K&k) {
+		if (sortmode == 0) { if (knext >= k)return 0; }
+		else { if (knext <= k)return 0; }
+		return 1;
+	};
+public:
+	//查改增删_内部实现
+	N* pleft[pmax] = {}; //中间结果
+
+	N* find_impl(const K&k) {
+		N*cur = head; int i = pmax - 1;
+		while (i >= 0) {
+			while (cur->p[i] != tail&&cmp(cur->p[i]->k, k)) { 
+				cur = cur->p[i]; 
+			}//向右查找
+			pleft[i] = cur; i--;//向下
+		}
+		return pleft[0];
+	}
+private:
+	//根据查找结果 插入节点 删除节点
+	void push_impl(N*n) {
+		msize++;
+		for (int i = 0; i < n->plen; i++) { n->p[i] = pleft[i]->p[i]; pleft[i]->p[i] = n; };
+		if (n->p[0] == tail)rhead = n;
+	}
+	void erase_impl() {
+		msize--; N*n = pleft[0]->p[0];
+		for (int i = 0; i < n->plen; i++) pleft[i]->p[i] = n->p[i]; delete n;
+		if (pleft[0]->p[0] == tail)rhead = pleft[0]->p[0];
+	}
+public:
+	//查改增删_必须先查 一般用于重载[]运算符
+	bool isitexist(const K&k) {
+		find_impl(k);
+		if (pleft[0]->p[0] == tail)return 0;
+		return pleft[0]->p[0]->k == k;
+	}
+	T& getit() { return pleft[0]->p[0]->t; }
+	T& pushit(const K&k, const T&t) {
+		N*cur = new N(nrand()); cur->k = k; cur->t = t;
+		push_impl(cur); return cur->t;
+	}
+	void eraseit() { erase_impl(); }
+	//遍历模板
+	template<class F2, class ...T2>
+	void foreachk(F2 f, T2 ...args) {
+		N*cur = head->p[0];
+		while (cur != tail) {
+			f(cur->k, args...);
+			cur = cur->p[0];
+		}
+	}
+	template<class F2, class ...T2>
+	void foreacht(F2 f, T2 ...args) {
+		N*cur = head->p[0];
+		while (cur != tail) {
+			f(cur->t, args...);
+			cur = cur->p[0];
+		}
+	}
+	//改增删 常规
+	T& get(const K&k) {
+		find_impl(k);
+		return getit();
+	}
+	T& push(const K&k, const T&t) {
+		find_impl(k);
+		return pushit(k, t);
+	}
+	void erase(const K&k) {
+		find_impl(k);
+		eraseit();
+	}
+};
+
+//队列/栈两用 使用动态循环数组实现
+template<class T>
+struct Queue {
+	int mhead = 0, mend = 0, mcapacity = 0; T*v = NULL;
+	bool isempty() { if (mend == mhead)return 1; return 0; }
+	int size() { return mend - mhead; }
+	int mcapadef = 16, mheat = 0, mheatdef = 8;
+	//动态数组
+	void changecapacity(int capanew) {
+		int s1 = mhead, l1 = size(), s2 = 0, l2 = 0;
+		if (mend > mcapacity) { l2 = mend - mcapacity; l1 = mcapacity - mhead; }
+		T*temp = new T[capanew]; int i;
+		for (i = s1; i < s1 + l1; i++)temp[i - s1] = v[i];
+		for (i = s2; i < s2 + l2; i++)temp[i - s2 + l1] = v[i];
+		delete[]v; v = temp; temp = NULL;
+		mhead = 0; mend = l1 + l2; mcapacity = capanew;
+	}
+	void checkcapacity(int needone) {
+		int capaneed = needone + size(), capanew = mcapadef;
+		while (capanew < capaneed)capanew *= 2;
+		if (capanew > mcapacity) { changecapacity(capanew); mheat = mheatdef; return; }
+		if (mheat > 0) { mheat--; return; }
+		if (capanew < mcapacity) { changecapacity(capanew); mheat = mheatdef; return; }
+	}
+	//输入输出
+	void push_end(const T&x) { checkcapacity(1); v[mend%mcapacity] = x; mend++; }
+	//以下四个执行前必须检查isempty
+	T&head() { return v[mhead]; }
+	T&rhead() { return v[(mend - 1) % mcapacity]; }
+	void pop_head() {
+		mhead++; if (mhead == mcapacity) {
+			mhead = 0; mend -= mcapacity;
+		}checkcapacity(0);
+	}
+	void pop_end() { mend--; checkcapacity(0); }
+	//构造/析构
+	void Reset() { delete[]v; v = NULL; mhead = 0; mend = 0; mcapacity = 0; }
+	~Queue() { if (v != NULL)Reset(); };
+	void operator=(const Queue<T>&y) {
+		Reset(); mcapadef = y.mcapadef; mheat = 0; mheatdef = y.mheatdef;
+		if (!y.isempty()) {
+			v = new T[y.mcapacity]; mcapacity = y.mcapacity; for (int i = y.mhead; i < y.mend; i++)
+				v[i%mcapacity] = y.v[i%mcapacity]; mhead = y.mhead; mend = y.mend;
+		}
+	}
+};
