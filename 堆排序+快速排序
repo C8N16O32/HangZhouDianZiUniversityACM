@@ -1,0 +1,79 @@
+//头文件省略
+//打印
+void plot(vector<int> &arr) {
+	for (int i = 0; i < arr.size(); i++)
+		printf("%d ", arr[i]);
+	printf("\n");
+	return;
+}
+//排序
+vector<int> MySort(vector<int>& arr) {
+	//cmp 在需要的时候更换为lambda或函数指针
+#define cmp(x,y) x<y
+	//堆排序
+	auto heap_step = [&](int *arr, int start, int end) {
+		int father = start, son = father * 2 + 1;
+		while (son<end) {
+			if (son + 1<end&&cmp(arr[son], arr[son + 1]))
+				son++;
+			if (cmp(arr[son], arr[father]))
+				return;
+			int temp = arr[father]; arr[father] = arr[son]; arr[son] = temp;
+			father = son; son = father * 2 + 1;
+		}
+		return;
+	};
+	auto heapsortmain = [&](int first, int end) {
+		int size = end - first;
+		int *arrc = &arr[first];
+		for (int i = size / 2 - 1; i >= 0; i--)
+			heap_step(arrc, i, size);
+		int temp;
+		for (int i = size - 1; i >= 0; i--) {
+			temp = arrc[0]; arrc[0] = arrc[i]; arrc[i] = temp;
+			heap_step(arrc, 0, i);
+		}
+	};
+
+	//使用非递归快速排序 在长度不高于minl时使用插入排序
+	//栈
+	struct R { int l, rl; };
+	const int maxsth = 1000;
+	R st[maxsth]; int sth = 0;
+	//无回调的非递归写法
+	const int minl = 8;
+	st[sth++] = { 0,(int)arr.size() - 1 };
+	while (sth) {
+		R cur = st[--sth];
+		if (cur.rl - cur.l + 1 <= minl) {
+			//堆排序
+			heapsortmain(cur.l, cur.rl + 1);
+		}
+		else {
+			//快速排序
+			int tmp = arr[cur.l];
+			int l = cur.l, r = cur.rl;
+			while (l != r) {
+				while (l<r&&cmp(tmp, arr[r]))r--;
+				if (l<r)arr[l++] = arr[r];
+				while (l<r&&cmp(arr[l], tmp))l++;
+				if (l<r)arr[r--] = arr[l];
+			}
+			arr[l] = tmp;
+			st[sth++] = { cur.l,l - 1 };
+			st[sth++] = { l + 1,cur.rl };
+		}
+	}
+#undef cmp
+	return arr;
+}
+
+//测试用例
+int main() {
+	vector<int> arr = { 884688278,884688278,884688278,884688278,387052570,77481420,537616843,659978110,215386675,604354651,64838842,830623614,544526209,292446044,570872277,946770900,411203381,445747969,480363996,31693639,303753633,261627544,884642435,978672815,427529125 };
+	for (int i = 0; i < arr.size(); i++)
+		arr[i]/=100000;
+	arr = MySort(arr);
+	plot(arr);
+	return 0;
+}
