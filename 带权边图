@@ -1,0 +1,100 @@
+const int inp[][3] = {
+	{ 0,1,10 },{ 1,2,6 },{ 2,3,1 },{ 3,4,1 },{ 4,5,0 }
+	,{ 0,6,5 },{ 6,7,1 },{ 7,2,10 },{ 7,8,10 },{ 8,2,1 },{ 8,9,5 },{ 9,2,5 },{ 9,10,0 },{ 10,4,1 },{ 10,11,1 },{ 11,5,0 }
+	,{ 12,6,5 },{ 12,13,2 },{ 13,7,1 },{ 14,7,10 },{ 14,8,1 },{ 15,8,10 },{ 16,9,1 },{ 16,17,0 },{ 17,11,5 }
+	,{ 18,12,1 },{ 19,12,5 },{ 20,13,10 },{ 20,14,1 },{ 21,15,5 },{ 22,15,1 },{ 22,23,5 },{ 23,15,1 },{ 23,16,1 },{ 24,17,5 }
+	,{ 25,18,1 },{ 25,19,1 },{ 26,19,0 },{ 26,20,0 },{ 27,20,5 },{ 27,21,1 },{ 28,22,1 },{ 28,23,5 },{ 28,24,0 }
+}, L = sizeof(inp) / sizeof(int[3]), N = 29;
+
+int edge[N][N];//邻接矩阵 初始-1表示两点之间无连线
+int dist[N][N];//两点之间最短距离
+
+void init() {
+	//edge初始化
+	for (int i = 0; i < N; i++)
+		for (int j = 0; j < N; j++)
+			edge[i][j] = -1;
+	//edge输入
+	int edgemuti = 1, edgeadd = 0;//修改处
+	for (int i = 0; i < L; i++) {
+		int x = inp[i][0], y = inp[i][1], v = inp[i][2];
+		edge[x][y] = edge[y][x] = v*edgemuti + edgeadd; //修改处
+	}
+	//点x到全图其他点的最短距离
+	auto VBFS = [&](int x) {
+		//标记
+		int dp[N] = {};
+		for (int i = 0; i < N; i++)
+			dp[i] = -1;
+		//堆
+		Slist<int, int> slist;
+		//BFS
+		dp[x] = 0;
+		for (int i = 0; i < N; i++)
+			if (edge[x][i] != -1)slist.push(0 + edge[x][i], i);
+		using SN = Slist<int, int>::N;
+		while (!slist.isempty()) {
+			slist.find_impl(slist.getrtail()->k);
+			SN*pcur = slist.pleft[0]->p[0];
+			int k = pcur->k, v = pcur->t;
+			slist.eraseit();
+			if (dp[v] == -1)dp[v] = k;
+			else continue;
+			for (int i = 0; i < N; i++)
+				if (edge[v][i] != -1 && dp[i] == -1)
+					slist.push(k + edge[v][i], i);
+		}
+		for (int i = 0; i < N; i++)
+			if (i != x)dist[x][i] = dp[i];
+	};
+	for (int i = 0; i < N; i++)
+		VBFS(i);
+	return;
+}
+
+vector<int> getPath(int x, int y) {
+	//推进
+	vector<int> arr;
+	bool tag[N] = {};
+	int cur = x;
+	Queue<int> queue;
+	for (int i = 0; i < N; i++)
+		if (edge[cur][i] != -1 && dist[i][cur] + dist[i][y] == dist[cur][y]){
+			queue.push_end(i); tag[i] = 1;
+		}
+	while (!queue.isempty()) {
+		cur = queue.head(); queue.pop_head();
+		arr.push_back(cur);
+		for (int i = 0; i < N; i++)
+			if (edge[cur][i] != -1 && !tag[i] && dist[i][cur]==edge[i][cur] && dist[i][cur] + dist[i][y] == dist[cur][y]){
+				queue.push_end(i); tag[i] = 1;
+			}
+	}
+	return arr;
+}
+
+template<class F, class ...T>
+void forEachIJ(int I, int J, F f,T ...args ) {
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < N; j++)
+			f(i,j,args...);
+		printf("\n");
+	}
+};
+
+int main() {
+	init();
+
+	forEachIJ(N,N,
+	[&](int i, int j) {
+		if (i == j)return;
+		printf("%2d 至 %2d 最短%2d  路径点: ", i, j, dist[i][j]);
+		vector<int> p = getPath(i, j);
+		for (int k = 0; k < p.size(); k++)
+			printf("%4d", p[k]);
+		printf("\n");
+	}
+	);
+
+	return 0;
+}
